@@ -21,9 +21,11 @@ import java.util.Objects;
 public class Main extends JFrame{
     // Double
     private static double[] arr, arr_sol;
-    private static double u0, T = 1,h, a = 0.5, phi = 0.05, lambda = 0.5, eps, error;
+    // Variables
+    private static double u0, T = 1,h, a = 0.5, lambda = 0.5, error;
+    private static double theta, eta0, eta1, zeta0, zeta1, phi0, phi1, epsilon;
     // Integer
-    private static int N = 8, problem = 0, meth = 0; // M:1,2;
+    private static int N = 8, problem = 0, method = 0; // M:1,2;
     // X and Y coordinate lists
     private static ArrayList<Double> xData1;
     private static ArrayList<Double> yData1;
@@ -44,9 +46,8 @@ public class Main extends JFrame{
     private static final String seriesName2 = "Interpolate";
     private static final String seriesName3 = "Whatever";
 
-
     // Building the user interface
-    Main() {
+    public Main() {
         setLayout(new BorderLayout());
 
         JPanel mainPanel = new JPanel();
@@ -88,15 +89,15 @@ public class Main extends JFrame{
         display.addActionListener(actionEvent -> {
             N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());             // Get number of nodes
             problem = problemsChoice.getSelectedIndex();                                                        // Get problem ubdex
-            meth = methodChoice.getSelectedIndex();                                                             // Get method index
-            eps = Double.parseDouble(Objects.requireNonNull(epsilonChoice.getSelectedItem()).toString());       // Get epsilon index
+            method = methodChoice.getSelectedIndex();                                                           // Get method index
+            epsilon = Double.parseDouble(Objects.requireNonNull(epsilonChoice.getSelectedItem()).toString());   // Get epsilon index
             Draw();                                                                                             // Draw graphs
             repaint();                                                                                          // Show the change
         });
     }
 
     /**
-     * Algorithm Progonka
+     * Algorithm of "progonka"
      * */
     private double[] Progonka(int n, double[] A, double[] B, double[] C, double[] f)
     {
@@ -125,19 +126,26 @@ public class Main extends JFrame{
      * P: 1, 5, 13.1, 13.4
      *
      * */
-    private static double Func(double x, double y) {
+    private static double Function(double x, double y) {
         // Change this function
-        return Math.sin(x);
+        return ((1 - 2.0*x)/(1.0 + x) - epsilon - Math.pow(Math.E, -1.0 / epsilon)/(1.0 - Math.pow(Math.E, -1.0 / epsilon)))
+                * (2.0 / Math.pow(1.0 + x, 3));
     }
     /**
-     * Solution of problems.
+     * Analytical solutions.
      *
-     * P: 1, 5, 13.1, 13.4
+     * P: 1, 2, 4
      *
      * */
-    private static double SolutionFunc(double x) {
+    private static double SolutionFunctionU(double x) {
         // Change this function or remove it
-        return Math.sin(x);
+        return switch (problem) {
+            case 1 -> Math.sin(x);
+            case 2 -> Math.cos(x);
+            case 3 -> x / (1.0 + x) + (Math.pow(Math.E, -1.0 / epsilon) - Math.pow(Math.E,
+                    -(2.0 * x) / (epsilon * (1.0 + x)))) / (2.0 * (1 - Math.pow(Math.E, -1.0 / epsilon)));
+            default -> 0;
+        };
     }
 
     /**
@@ -170,7 +178,8 @@ public class Main extends JFrame{
         yData2.clear();
         //---------------------------------------------------------------
         // Initial values set up (or remove it)
-        h = T/(N-1);
+
+     /*   h = T/(N-1);
         switch(problem) {
             case 0:
                 u0 = 2; break;
@@ -180,7 +189,8 @@ public class Main extends JFrame{
                 u0 = 1; break;
             case 3:
                 u0 = phi;
-        }
+        }*/
+
         // Draw graph of solution function
         //        for (double x = 0.0; x <= 1.0; x += 0.001) {
         //            xData1.add(x);
@@ -189,7 +199,7 @@ public class Main extends JFrame{
         // Initialize certain variables here ...
 
         // Solve by a selected method
-        switch(meth) {
+        switch(method) {
             // Method 1
             case 0:
                 for(double x=0; x<=10; x+=0.01) {
