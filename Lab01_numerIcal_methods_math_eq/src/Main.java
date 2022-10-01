@@ -40,6 +40,11 @@ public class Main extends JFrame{
     private final JComboBox<String> problemsChoice;
     private final JComboBox<String> methodChoice;
     private final JComboBox<Double> epsilonChoice;
+
+    private final JTextField epsilonInput;
+    private final JTextField thetaInput;
+    private final JTextField etaInput;
+
     private JButton display = new JButton("Display");
     // Series names
     private static final String seriesName1 = "Test function";
@@ -49,11 +54,9 @@ public class Main extends JFrame{
     // Building the user interface
     public Main() {
         setLayout(new BorderLayout());
-
         JPanel mainPanel = new JPanel();
         mainPanel.setBackground(Color.WHITE);
         add(mainPanel, BorderLayout.CENTER);
-
         // Parameter, methods selection
         // Customize parameters!!
         Integer[] choicesNodes = { 8, 16, 32, 64, 128, 256, 512, 1024 };
@@ -62,26 +65,27 @@ public class Main extends JFrame{
         Double[] choicesEpsilon = { 0.5, 0.3, 0.1, 0.08, 0.0625, 0.015 };
         // Node selection
         nodesChoice = new JComboBox<>(choicesNodes);
-        nodesChoice.setPreferredSize(new Dimension(1,25));
         // Problems selection
         problemsChoice = new JComboBox<>(choicesProblem);
-        nodesChoice.setPreferredSize(new Dimension(1,25));
-
         // Method selection
         methodChoice = new JComboBox<>(choicesMethod);
-        nodesChoice.setPreferredSize(new Dimension(1,25));
-
         // Epsilon selection
         epsilonChoice = new JComboBox<>(choicesEpsilon);
-        nodesChoice.setPreferredSize(new Dimension(1,25));
+        // Epsilon input
+        epsilonInput = new JTextField();
+        thetaInput = new JTextField();
+        etaInput = new JTextField();
         // Control panel
         JPanel controlPanel = new JPanel();
-        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
+        controlPanel.setLayout(new GridLayout(8, 1));
         controlPanel.setBackground(Color.LIGHT_GRAY);
         controlPanel.add(nodesChoice);
         controlPanel.add(problemsChoice);
         controlPanel.add(methodChoice);
         controlPanel.add(epsilonChoice);
+        controlPanel.add(epsilonInput);
+        controlPanel.add(thetaInput);
+        controlPanel.add(etaInput);
         controlPanel.add(display);
         add(controlPanel, BorderLayout.EAST);
 
@@ -204,7 +208,7 @@ public class Main extends JFrame{
             case 0:
                 for(double x=0; x<=10; x+=0.01) {
                     xData2.add(x);
-                    yData2.add(Math.sin(x)); // Just a sample
+                    yData2.add(Function(x, 0)); // Just a sample
                 }
                 break;
             // Method 2
@@ -248,7 +252,7 @@ public class Main extends JFrame{
         interpolateFunctionSeries.setLineWidth(1.2f);
 
         Main frame = new Main();
-        frame.setTitle("<Title>");
+        frame.setTitle("Project #1");
         frame.add(new XChartPanel<>(chart));
         frame.setSize(frame.getWidth(), frame.getHeight());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
