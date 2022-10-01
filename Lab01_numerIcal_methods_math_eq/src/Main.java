@@ -23,7 +23,7 @@ public class Main extends JFrame{
     private static double[] arr, arr_sol;
     // Variables
     private static double u0, T = 1,h, a = 0.5, lambda = 0.5, error;
-    private static double theta, eta0, eta1, zeta0, zeta1, phi0, phi1, epsilon;
+    private static double theta, eta0 = 0, eta1 = 1, zeta0 = 0, zeta1 = 1, phi0 = 0, phi1 = 1, E;
     // Integer
     private static int N = 8, problem = 0, method = 0; // M:1,2;
     // X and Y coordinate lists
@@ -48,7 +48,7 @@ public class Main extends JFrame{
     private JButton display = new JButton("Display");
     // Series names
     private static final String seriesName1 = "Test function";
-    private static final String seriesName2 = "Interpolate";
+    private static final String seriesName2 = "Analytical solution";
     private static final String seriesName3 = "Whatever";
 
     // Building the user interface
@@ -63,16 +63,13 @@ public class Main extends JFrame{
         String[] choicesProblem = { "Problem 1", "Problem 5", "Problem 13.1", "Problem 13.4" };
         String[] choicesMethod = { "Method 1", "Method 2" };
         Double[] choicesEpsilon = { 0.5, 0.3, 0.1, 0.08, 0.0625, 0.015 };
-        // Node selection
-        nodesChoice = new JComboBox<>(choicesNodes);
-        // Problems selection
-        problemsChoice = new JComboBox<>(choicesProblem);
-        // Method selection
-        methodChoice = new JComboBox<>(choicesMethod);
-        // Epsilon selection
-        epsilonChoice = new JComboBox<>(choicesEpsilon);
-        // Epsilon input
-        epsilonInput = new JTextField();
+
+        nodesChoice = new JComboBox<>(choicesNodes);                    // Node selection
+        problemsChoice = new JComboBox<>(choicesProblem);               // Problems selection
+        methodChoice = new JComboBox<>(choicesMethod);                  // Method selection
+        epsilonChoice = new JComboBox<>(choicesEpsilon);                // Epsilon selection
+
+        epsilonInput = new JTextField();                                // Epsilon input
         thetaInput = new JTextField();
         etaInput = new JTextField();
         // Control panel
@@ -94,7 +91,7 @@ public class Main extends JFrame{
             N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());             // Get number of nodes
             problem = problemsChoice.getSelectedIndex();                                                        // Get problem ubdex
             method = methodChoice.getSelectedIndex();                                                           // Get method index
-            epsilon = Double.parseDouble(Objects.requireNonNull(epsilonChoice.getSelectedItem()).toString());   // Get epsilon index
+            E = Double.parseDouble(Objects.requireNonNull(epsilonChoice.getSelectedItem()).toString());         // Get epsilon index
             Draw();                                                                                             // Draw graphs
             repaint();                                                                                          // Show the change
         });
@@ -132,7 +129,7 @@ public class Main extends JFrame{
      * */
     private static double Function(double x, double y) {
         // Change this function
-        return ((1 - 2.0*x)/(1.0 + x) - epsilon - Math.pow(Math.E, -1.0 / epsilon)/(1.0 - Math.pow(Math.E, -1.0 / epsilon)))
+        return ((1 - 2.0*x)/(1.0 + x) - E - Math.pow(Math.E, -1.0 / E)/(1.0 - Math.pow(Math.E, -1.0 / E)))
                 * (2.0 / Math.pow(1.0 + x, 3));
     }
     /**
@@ -141,13 +138,18 @@ public class Main extends JFrame{
      * P: 1, 2, 4
      *
      * */
-    private static double SolutionFunctionU(double x) {
-        // Change this function or remove it
+    private static double SolutionFunction(double x) {
         return switch (problem) {
-            case 1 -> Math.sin(x);
-            case 2 -> Math.cos(x);
-            case 3 -> x / (1.0 + x) + (Math.pow(Math.E, -1.0 / epsilon) - Math.pow(Math.E,
-                    -(2.0 * x) / (epsilon * (1.0 + x)))) / (2.0 * (1 - Math.pow(Math.E, -1.0 / epsilon)));
+            case 0 -> (phi0/zeta0 - (phi1/zeta1 - phi0/zeta0 + E - 0.5)/(Math.pow(Math.E, -1/E)-1))
+                    +Math.pow(Math.E, -x/E)*((phi1/zeta0 - phi0/zeta0 + E - 0.5)/(Math.pow(Math.E, -1/E)-1))
+                    -E*x + 0.5 * x * x;
+            case 1 -> (phi1/zeta1 + E - 0.5 - Math.pow(Math.E, -1/E)*(phi0-E*E)/(1+zeta0))*
+                    (1+zeta0)/(1+zeta0-Math.pow(Math.E, -1/E)*zeta0) +
+                    Math.pow(Math.E, -x/E)*((phi0-E*E)/(1+zeta0)-(zeta0)/(1+zeta0)*(phi1/zeta1
+                    +E-0.5-Math.pow(Math.E, -1/E)*(phi0-E*E)/(1+zeta0))*(1/(1+zeta0-Math.pow(Math.E, -1/E)*zeta0)))
+                    -E*x + 0.5 * x * x;
+            case 2 -> x / (1.0 + x) + (Math.pow(Math.E, -1.0 / E) - Math.pow(Math.E,
+                    -(2.0 * x) / (E * (1.0 + x)))) / (2.0 * (1 - Math.pow(Math.E, -1.0 / E)));
             default -> 0;
         };
     }
@@ -208,7 +210,7 @@ public class Main extends JFrame{
             case 0:
                 for(double x=0; x<=10; x+=0.01) {
                     xData2.add(x);
-                    yData2.add(Function(x, 0)); // Just a sample
+                    yData2.add(SolutionFunction(x)); // Just a sample
                 }
                 break;
             // Method 2
