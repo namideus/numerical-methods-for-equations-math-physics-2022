@@ -43,7 +43,11 @@ public class Main extends JFrame{
 
     private final JTextField epsilonInput;
     private final JTextField thetaInput;
-    private final JTextField etaInput;
+    private final JTextField zeta0Input;
+    private final JTextField zeta1Input;
+    private final JTextField phi0Input;
+    private final JTextField phi1Input;
+
 
     private JButton display = new JButton("Display");
     // Series names
@@ -60,7 +64,7 @@ public class Main extends JFrame{
         // Parameter, methods selection
         // Customize parameters!!
         Integer[] choicesNodes = { 8, 16, 32, 64, 128, 256, 512, 1024 };
-        String[] choicesProblem = { "Problem 1", "Problem 5", "Problem 13.1", "Problem 13.4" };
+        String[] choicesProblem = { "Problem 1", "Problem 2", "Problem 4" };
         String[] choicesMethod = { "Method 1", "Method 2" };
         Double[] choicesEpsilon = { 0.5, 0.3, 0.1, 0.08, 0.0625, 0.015 };
 
@@ -71,29 +75,42 @@ public class Main extends JFrame{
 
         epsilonInput = new JTextField();                                // Epsilon input
         thetaInput = new JTextField();
-        etaInput = new JTextField();
+        zeta0Input = new JTextField();
+        zeta1Input = new JTextField();
+        phi0Input = new JTextField();
+        phi1Input = new JTextField();
+
         // Control panel
         JPanel controlPanel = new JPanel();
-        controlPanel.setLayout(new GridLayout(8, 1));
+        controlPanel.setLayout(new GridLayout(10, 1));
         controlPanel.setBackground(Color.LIGHT_GRAY);
         controlPanel.add(nodesChoice);
         controlPanel.add(problemsChoice);
         controlPanel.add(methodChoice);
-        controlPanel.add(epsilonChoice);
+        // controlPanel.add(epsilonChoice);
         controlPanel.add(epsilonInput);
+        controlPanel.add(zeta0Input);
+        controlPanel.add(zeta1Input);
+        controlPanel.add(phi0Input);
+        controlPanel.add(phi1Input);
         controlPanel.add(thetaInput);
-        controlPanel.add(etaInput);
         controlPanel.add(display);
         add(controlPanel, BorderLayout.EAST);
 
         // Listen to display button click, update the graph
         display.addActionListener(actionEvent -> {
+            E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
+            zeta0 = Double.parseDouble(Objects.requireNonNull(zeta0Input.getText()));
+            zeta1 = Double.parseDouble(Objects.requireNonNull(zeta1Input.getText()));
+            phi0 = Double.parseDouble(Objects.requireNonNull(phi0Input.getText()));
+            phi1 = Double.parseDouble(Objects.requireNonNull(phi1Input.getText()));
+            theta = Double.parseDouble(Objects.requireNonNull(thetaInput.getText()));
             N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());             // Get number of nodes
             problem = problemsChoice.getSelectedIndex();                                                        // Get problem ubdex
             method = methodChoice.getSelectedIndex();                                                           // Get method index
-            E = Double.parseDouble(Objects.requireNonNull(epsilonChoice.getSelectedItem()).toString());         // Get epsilon index
-            Draw();                                                                                             // Draw graphs
-            repaint();                                                                                          // Show the change
+            //E = Double.parseDouble(Objects.requireNonNull(epsilonChoice.getSelectedItem()).toString());       // Get epsilon index
+            Draw();
+            repaint();
         });
     }
 
@@ -242,17 +259,15 @@ public class Main extends JFrame{
         chart.getStyler().setZoomEnabled(true);
         chart.getStyler().setZoomResetByButton(true);
         chart.getStyler().setMarkerSize(0);
-
         // Series 1
         testFunctionSeries = chart.addSeries(seriesName1, xData1, yData1);
         testFunctionSeries.setLineColor(Color.blue);
         testFunctionSeries.setLineWidth(1.2f);
-
         // Series 2
         interpolateFunctionSeries = chart.addSeries(seriesName2, xData2, yData2);
         interpolateFunctionSeries.setLineColor(Color.RED);
         interpolateFunctionSeries.setLineWidth(1.2f);
-
+        // Main frame
         Main frame = new Main();
         frame.setTitle("Project #1");
         frame.add(new XChartPanel<>(chart));
