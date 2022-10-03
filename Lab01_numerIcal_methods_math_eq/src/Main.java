@@ -73,12 +73,18 @@ public class Main extends JFrame{
         methodChoice = new JComboBox<>(choicesMethod);                  // Method selection
         epsilonChoice = new JComboBox<>(choicesEpsilon);                // Epsilon selection
 
-        epsilonInput = new JTextField();                                // Epsilon input
+        epsilonInput = new JTextField();
+        epsilonInput.setToolTipText("Epsilon");
         thetaInput = new JTextField();
+        thetaInput.setToolTipText("Theta");
         zeta0Input = new JTextField();
+        zeta0Input.setToolTipText("Zeta 0");
         zeta1Input = new JTextField();
+        zeta1Input.setToolTipText("Zeta 1");
         phi0Input = new JTextField();
+        phi0Input.setToolTipText("Phi 0");
         phi1Input = new JTextField();
+        phi1Input.setToolTipText("Phi 1");
 
         // Control panel
         JPanel controlPanel = new JPanel();
