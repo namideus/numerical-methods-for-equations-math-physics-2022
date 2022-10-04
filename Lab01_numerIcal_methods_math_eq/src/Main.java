@@ -231,7 +231,7 @@ public class Main extends JFrame{
         switch(method) {
             // Method 1
             case 0:
-                for(double x=0; x<=10; x+=0.01) {
+                for(double x=0; x<=1; x+=0.001) {
                     xData2.add(x);
                     yData2.add(SolutionFunction(x)); // Just a sample
                 }
