@@ -20,7 +20,7 @@ import java.util.Objects;
 
 public class Main extends JFrame{
     // Double
-    private static double[] array_a, array_b, array_f, array_r, array_gamma, array_sol;
+    private static double[] array_a, array_b, array_c, array_f, array_r, array_gamma, array_sol;
     // Variables
     private static double u0, T = 1.0, h, error, x;
     private static double a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
@@ -191,6 +191,11 @@ public class Main extends JFrame{
         yData2.add(0d);
     }
 
+    public static void addCoord(double x, double y) {
+        xData1.add(x);
+        yData1.add(y);
+    }
+
     // Draw
     private static void Draw() {
         // First clear up array lists
@@ -226,38 +231,55 @@ public class Main extends JFrame{
         h = T/(N-1);
         array_a = new double[N+1];
         array_b = new double[N+1];
+        array_c = new double[N+1];
         array_f = new double[N+1];
         array_r = new double[N+1];
+        array_gamma = new double[N+1];
 
-        for (int i = 1; i <= N; i++) {
+        switch(method) {
+            case 0:
+                for (int i = 1; i <= N; i++) {
+                    array_gamma[i] = 1.0;
+                }
+                break;
+            case 1:
+                for (int i = 1; i <= N; i++) {
+                    array_gamma[i] = 1 + Math.abs(array_r[i]);
+                }
+                break;
+        }
+
+        array_f[1] = phi0;
+        array_f[N] = phi1;
+        array_b[1] = zeta0;
+        array_c[1] = eta0*E;
+        array_a[N] = zeta1;
+        array_b[N] = eta1*E;
+
+        for (int i = 2; i <= N-1; i++) {
             x = (i-1.0)/(N-1);
-            array_a[i] = CoefficientA(x);
-            array_b[i] = CoefficientB(x);
+            array_a[i] = E*array_gamma[i];
+            array_b[i] = CoefficientA(x);
+            array_c[i] = CoefficientB(x);
             array_f[i] = Function(x);
             array_r[i] = (array_a[i]*h)/(2*E);
+        }
+
+        array_sol = Progonka(N, array_a, array_b, array_c, array_f);
+
+       /* arr[0] = u0;
+        xData2.add(0d);
+        yData2.add(u0);
+        i = 1;*/
+        int i = 1;
+        for(double x=h; x<=1; x+=h, ++i) {
+            addCoord(x, array_sol[i]);
         }
 
         // Draw analytical solution
         for(double x=0; x<=1; x+=0.001) {
             xData2.add(x);
             yData2.add(SolutionFunction(x));
-        }
-
-        //array_sol = Progonka(N, array_a, array_b, array_f)
-
-        switch(method) {
-            // Method 1
-            case 0:
-                for (int i = 1; i <= N; i++) {
-                    array_gamma[i] = 1.0;
-                }
-                break;
-            // Method 2
-            case 1:
-                for (int i = 1; i <= N; i++) {
-                    array_gamma[i] = 1 + Math.abs(array_r[i]);
-                }
-                break;
         }
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
