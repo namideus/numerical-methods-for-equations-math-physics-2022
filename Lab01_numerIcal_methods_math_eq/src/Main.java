@@ -16,7 +16,7 @@ import java.util.Objects;
  * course: Numerical methods for equations of mathematical physics.
  *
  *
- * 2022/09/28
+ * 2022/10/07
  * */
 
 public class Main extends JFrame{
@@ -74,10 +74,11 @@ public class Main extends JFrame{
         display.addActionListener(actionEvent -> {
             E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
             theta = Double.parseDouble(Objects.requireNonNull(thetaInput.getText()));
-            N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());             // Get number of nodes
-            problem = problemsChoice.getSelectedIndex();                                                        // Get problem ubdex
-            method = methodChoice.getSelectedIndex();                                                           // Get method index
-            ComputeAndDraw();
+            N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());
+            problem = problemsChoice.getSelectedIndex();
+            method = methodChoice.getSelectedIndex();
+            ApplyNumericalMethod();
+            Draw();
             repaint();
         });
     }
@@ -161,13 +162,7 @@ public class Main extends JFrame{
         yData1.add(y);
     }
     // Apply numerical method and chart the end result
-    private static void ComputeAndDraw() {
-        // First clear up array lists
-        xData1.clear();
-        yData1.clear();
-        xData2.clear();
-        yData2.clear();
-        //---------------------------------------------------------------
+    private static void ApplyNumericalMethod() {
         // Initial & boundary values
         switch (problem) {
             case 0 -> {
@@ -200,7 +195,7 @@ public class Main extends JFrame{
         array_r = new double[N+1];
         array_gamma = new double[N+1];
         array_sol_origin = new double[N+1];
-        // Store analytical solution in the grid
+        // Analytical solution in the grid
         for (int i = 1; i <= N; i++) {
             x = (i-1.0)/(N-1);
             array_sol_origin[i] = SolutionFunction(x);
@@ -210,7 +205,7 @@ public class Main extends JFrame{
             x = (i-1.0)/(N-1);
             array_r[i] = (CoefficientA(x)*h)/(2*E);
         }
-        // Compute gamma array according to a selected method
+        // Compute gamma array according to a selected difference method
         switch(method) {
             case 0:
                 for (int i = 1; i <= N; i++)
@@ -240,9 +235,19 @@ public class Main extends JFrame{
         array_f[N] = phi1;
         // Double-sweep algorithm
         array_sol = ProgonkaAlgorithm(N, array_a, array_b, array_c, array_f);
+        // Compute the error and display, redefine error function
+        error = Error(array_sol_origin, array_sol);
+    }
+    // Chart solutions
+    private static void Draw() {
+        // First clear up array lists
+        xData1.clear();
+        yData1.clear();
+        xData2.clear();
+        yData2.clear();
         // Coordinates of numerical solution
-        int i = 1;
-        for(double x=h; x<=1; x+=h, ++i) {
+        for (int i = 1; i <= N; i++) {
+            x = (i-1.0)/(N-1);
             addCoord(x, array_sol[i]);
         }
         // Draw analytical solution
@@ -253,11 +258,8 @@ public class Main extends JFrame{
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
-        // Compute the error and display, redefine error function
-        error = Error(array_sol_origin, array_sol);
         chart.setTitle("Error: "+error);
     }
-
     // Main
     public static void main(String[] args) {
         Setup();
