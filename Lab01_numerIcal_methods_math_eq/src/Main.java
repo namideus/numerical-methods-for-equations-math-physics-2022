@@ -21,7 +21,7 @@ import java.util.Objects;
 
 public class Main extends JFrame{
     // Double
-    private static double[] array_a, array_b, array_c, array_f, array_r, array_gamma, array_sol;
+    private static double[] array_a, array_b, array_c, array_f, array_r, array_gamma, array_sol, array_sol_origin;
     // Variables
     private static double x, error, h, a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
     // Integer
@@ -34,7 +34,7 @@ public class Main extends JFrame{
     private final JComboBox<Integer> nodesChoice;
     private final JComboBox<String> problemsChoice,methodChoice;
     private final JComboBox<Double> epsilonChoice;
-    private final JTextField epsilonInput,thetaInput,zeta0Input,zeta1Input,eta0Input,eta1Input;
+    private final JTextField epsilonInput,thetaInput;
     private JButton display = new JButton("Display");
     // Series names
     private static final String seriesName1 = "Numerical solution";
@@ -47,10 +47,10 @@ public class Main extends JFrame{
         mainPanel.setBackground(Color.WHITE);
         add(mainPanel, BorderLayout.CENTER);
         // Parameter, methods selection
-        Integer[] choicesNodes = { 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 1536, 2048 };
+        Integer[] choicesNodes = { 8,12,16,24,32,48,64,96,128,192,256,384,512,768,1024,1536,2048,3072,4096};
         String[] choicesProblem = { "Problem 1", "Problem 2", "Problem 4" };
         String[] choicesMethod = { "Central difference (gamma 1)", "Directional difference (gamma 2)" };
-        Double[] choicesEpsilon = { 0.5, 0.3, 0.1, 0.08, 0.0625, 0.015 };
+        Double[] choicesEpsilon = { 0.5,0.3,0.1,0.08,0.0625,0.015 };
         nodesChoice = new JComboBox<>(choicesNodes);                    // Node selection
         problemsChoice = new JComboBox<>(choicesProblem);               // Problems selection
         methodChoice = new JComboBox<>(choicesMethod);                  // Method selection
@@ -136,14 +136,15 @@ public class Main extends JFrame{
             default -> 0;
         };
     }
-
     // Compute error
-    public static double Error(double[] m1, double[] m2) {
-        // Change this function
-        
-        return 0;
+    public static double Error(double[] a1, double[] a2) {
+        double max1=0, max2=0;
+        for (int i=1; i<=N; i++) {
+            max1 = Math.max(max1, Math.abs(a1[i] - a2[i]));
+            max2 = Math.max(max2, Math.abs(a1[i]));
+        }
+        return max1/max2*100;
     }
-
     // Set up
     private static void Setup() {
         xData1 = new ArrayList<>();
@@ -155,13 +156,11 @@ public class Main extends JFrame{
         xData2.add(0d);
         yData2.add(0d);
     }
-
     public static void addCoord(double x, double y) {
         xData1.add(x);
         yData1.add(y);
     }
-
-    // Draw
+    // Apply numerical method and chart the end result
     private static void ComputeAndDraw() {
         // First clear up array lists
         xData1.clear();
@@ -192,7 +191,7 @@ public class Main extends JFrame{
                 phi1 = 1+E+Math.pow(Math.E,-1/E)/(1-Math.pow(Math.E,-1/E));
             }
         }
-
+        // Initialize arrays and variables
         h = 1.0/(N-1);
         array_a = new double[N+1];
         array_b = new double[N+1];
@@ -200,12 +199,18 @@ public class Main extends JFrame{
         array_f = new double[N+1];
         array_r = new double[N+1];
         array_gamma = new double[N+1];
-
+        array_sol_origin = new double[N+1];
+        // Store analytical solution in the grid
+        for (int i = 1; i <= N; i++) {
+            x = (i-1.0)/(N-1);
+            array_sol_origin[i] = SolutionFunction(x);
+        }
+        // Compute R array
         for (int i = 1; i <= N; i++) {
             x = (i-1.0)/(N-1);
             array_r[i] = (CoefficientA(x)*h)/(2*E);
         }
-
+        // Compute gamma array according to a selected method
         switch(method) {
             case 0:
                 for (int i = 1; i <= N; i++)
@@ -216,7 +221,7 @@ public class Main extends JFrame{
                     array_gamma[i] = 1.0+Math.abs(array_r[i]);
                 break;
         }
-
+        // Compute A, B, C, F arrays
         for (int i = 1; i <= N; i++) {
             x = (i-1.0)/(N-1);
             array_a[i] = E/(h*h)*(array_gamma[i]-array_r[i]);
@@ -224,7 +229,7 @@ public class Main extends JFrame{
             array_c[i] = E/(h*h)*(array_gamma[i]+array_r[i]);
             array_f[i] = -Function(x);
         }
-
+        // Initialize boundary/corner values
         array_a[1] = 0;
         array_b[1] = zeta0+eta0*(E/h);
         array_c[1] = eta0*(E/h);
@@ -233,15 +238,13 @@ public class Main extends JFrame{
         array_b[N] = zeta1+eta1*(E/h);
         array_c[N] = 0;
         array_f[N] = phi1;
-
         // Double-sweep algorithm
         array_sol = ProgonkaAlgorithm(N, array_a, array_b, array_c, array_f);
-
+        // Coordinates of numerical solution
         int i = 1;
         for(double x=h; x<=1; x+=h, ++i) {
             addCoord(x, array_sol[i]);
         }
-
         // Draw analytical solution
         for(double x=0; x<=1; x+=0.001) {
             xData2.add(x);
@@ -250,9 +253,8 @@ public class Main extends JFrame{
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
-
         // Compute the error and display, redefine error function
-        error = Error(null, array_sol);
+        error = Error(array_sol_origin, array_sol);
         chart.setTitle("Error: "+error);
     }
 
