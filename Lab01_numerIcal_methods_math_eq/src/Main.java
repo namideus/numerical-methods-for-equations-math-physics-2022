@@ -7,6 +7,7 @@ import org.knowm.xchart.style.Styler;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -22,30 +23,18 @@ public class Main extends JFrame{
     // Double
     private static double[] array_a, array_b, array_c, array_f, array_r, array_gamma, array_sol;
     // Variables
-    private static double u0, T = 1.0, h, error, x;
-    private static double a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
+    private static double x, error, h, a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
     // Integer
     private static int N = 8, problem = 0, method = 0; // M:1,2;
     // X and Y coordinate lists
-    private static ArrayList<Double> xData1;
-    private static ArrayList<Double> yData1;
-    private static ArrayList<Double> xData2;
-    private static ArrayList<Double> yData2;
-    private static ArrayList<Double> xData3;
-    private static ArrayList<Double> yData3;
+    private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
     // User Interface (Java Swing)
     private static XYChart chart;
     private static XYSeries testFunctionSeries, interpolateFunctionSeries;
     private final JComboBox<Integer> nodesChoice;
-    private final JComboBox<String> problemsChoice;
-    private final JComboBox<String> methodChoice;
+    private final JComboBox<String> problemsChoice,methodChoice;
     private final JComboBox<Double> epsilonChoice;
-    private final JTextField epsilonInput;
-    private final JTextField thetaInput;
-    private final JTextField zeta0Input;
-    private final JTextField zeta1Input;
-    private final JTextField eta0Input;
-    private final JTextField eta1Input;
+    private final JTextField epsilonInput,thetaInput,zeta0Input,zeta1Input,eta0Input,eta1Input;
     private JButton display = new JButton("Display");
     // Series names
     private static final String seriesName1 = "Numerical solution";
@@ -58,30 +47,18 @@ public class Main extends JFrame{
         mainPanel.setBackground(Color.WHITE);
         add(mainPanel, BorderLayout.CENTER);
         // Parameter, methods selection
-        // Customize parameters!!
-        Integer[] choicesNodes = { 8, 16, 32, 64, 128, 256, 512, 1024 };
+        Integer[] choicesNodes = { 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024, 1536, 2048 };
         String[] choicesProblem = { "Problem 1", "Problem 2", "Problem 4" };
-        String[] choicesMethod = { "With central difference", "With directional difference" };
+        String[] choicesMethod = { "Central difference (gamma 1)", "Directional difference (gamma 2)" };
         Double[] choicesEpsilon = { 0.5, 0.3, 0.1, 0.08, 0.0625, 0.015 };
-
         nodesChoice = new JComboBox<>(choicesNodes);                    // Node selection
         problemsChoice = new JComboBox<>(choicesProblem);               // Problems selection
         methodChoice = new JComboBox<>(choicesMethod);                  // Method selection
         epsilonChoice = new JComboBox<>(choicesEpsilon);                // Epsilon selection
-
-        epsilonInput = new JTextField();
+        epsilonInput = new JTextField("0.0135");
         epsilonInput.setToolTipText("Epsilon");
-        thetaInput = new JTextField();
+        thetaInput = new JTextField("1");
         thetaInput.setToolTipText("Theta");
-        zeta0Input = new JTextField();
-        zeta0Input.setToolTipText("Zeta 0");
-        zeta1Input = new JTextField();
-        zeta1Input.setToolTipText("Zeta 1");
-        eta0Input = new JTextField();
-        eta0Input.setToolTipText("Eta 0");
-        eta1Input = new JTextField();
-        eta1Input.setToolTipText("Eta 1");
-
         // Control panel
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new GridLayout(25, 1));
@@ -90,49 +67,36 @@ public class Main extends JFrame{
         controlPanel.add(problemsChoice);
         controlPanel.add(methodChoice);
         controlPanel.add(epsilonInput);
-      /*  controlPanel.add(zeta0Input);
-        controlPanel.add(zeta1Input);
-        controlPanel.add(eta0Input);
-        controlPanel.add(eta1Input);*/
         controlPanel.add(thetaInput);
         controlPanel.add(display);
         add(controlPanel, BorderLayout.EAST);
-
         // Listen to display button click, update the graph
         display.addActionListener(actionEvent -> {
             E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
-           /* zeta0 = Double.parseDouble(Objects.requireNonNull(zeta0Input.getText()));
-            zeta1 = Double.parseDouble(Objects.requireNonNull(zeta1Input.getText()));
-            eta0 = Double.parseDouble(Objects.requireNonNull(eta0Input.getText()));
-            eta1 = Double.parseDouble(Objects.requireNonNull(eta1Input.getText()));*/
             theta = Double.parseDouble(Objects.requireNonNull(thetaInput.getText()));
             N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());             // Get number of nodes
             problem = problemsChoice.getSelectedIndex();                                                        // Get problem ubdex
             method = methodChoice.getSelectedIndex();                                                           // Get method index
-            Draw();
+            ComputeAndDraw();
             repaint();
         });
     }
 
     // Algorithm of "progonka"
-    private static double[] Progonka(int n, double[] A, double[] B, double[] C, double[] f) {
+    private static double[] ProgonkaAlgorithm(int n, double[] A, double[] B, double[] C, double[] f) {
         double[] U = new double[n+1];
         double[] alpha = new double[n+1];
         double[] beta = new double[n+1];
-
         alpha[1] = C[1]/B[1];
         beta[1] = f[1]/B[1];
-
         for (int i = 2; i <= n-1; i++) {
             alpha[i] = C[i]/(B[i] - alpha[i-1]*A[i]);
             beta[i] = (f[i] + beta[i-1]*A[i])/(B[i] - alpha[i-1]*A[i]);
         }
-
         U[n] = (f[n] + beta[n-1]*A[n])/(B[n] - alpha[n-1]*A[n]);
-
-        for (int i = n-1; i >= 1; i--)
+        for (int i = n-1; i >= 1; i--) {
             U[i] = alpha[i]*U[i+1] + beta[i];
-
+        }
         return U;
     }
 
@@ -176,6 +140,7 @@ public class Main extends JFrame{
     // Compute error
     public static double Error(double[] m1, double[] m2) {
         // Change this function
+        
         return 0;
     }
 
@@ -197,7 +162,7 @@ public class Main extends JFrame{
     }
 
     // Draw
-    private static void Draw() {
+    private static void ComputeAndDraw() {
         // First clear up array lists
         xData1.clear();
         yData1.clear();
@@ -228,7 +193,7 @@ public class Main extends JFrame{
             }
         }
 
-        h = T/(N-1);
+        h = 1.0/(N-1);
         array_a = new double[N+1];
         array_b = new double[N+1];
         array_c = new double[N+1];
@@ -236,41 +201,42 @@ public class Main extends JFrame{
         array_r = new double[N+1];
         array_gamma = new double[N+1];
 
+        for (int i = 1; i <= N; i++) {
+            x = (i-1.0)/(N-1);
+            array_r[i] = (CoefficientA(x)*h)/(2*E);
+        }
+
         switch(method) {
             case 0:
-                for (int i = 1; i <= N; i++) {
+                for (int i = 1; i <= N; i++)
                     array_gamma[i] = 1.0;
-                }
                 break;
             case 1:
-                for (int i = 1; i <= N; i++) {
-                    array_gamma[i] = 1 + Math.abs(array_r[i]);
-                }
+                for (int i = 1; i <= N; i++)
+                    array_gamma[i] = 1.0+Math.abs(array_r[i]);
                 break;
         }
 
-        array_f[1] = phi0;
-        array_f[N] = phi1;
-        array_b[1] = zeta0;
-        array_c[1] = eta0*E;
-        array_a[N] = zeta1;
-        array_b[N] = eta1*E;
-
-        for (int i = 2; i <= N-1; i++) {
+        for (int i = 1; i <= N; i++) {
             x = (i-1.0)/(N-1);
-            array_a[i] = E*array_gamma[i];
-            array_b[i] = CoefficientA(x);
-            array_c[i] = CoefficientB(x);
-            array_f[i] = Function(x);
-            array_r[i] = (array_a[i]*h)/(2*E);
+            array_a[i] = E/(h*h)*(array_gamma[i]-array_r[i]);
+            array_b[i] = (2*E*array_gamma[i])/(h*h)+CoefficientB(x);
+            array_c[i] = E/(h*h)*(array_gamma[i]+array_r[i]);
+            array_f[i] = -Function(x);
         }
 
-        array_sol = Progonka(N, array_a, array_b, array_c, array_f);
+        array_a[1] = 0;
+        array_b[1] = zeta0+eta0*(E/h);
+        array_c[1] = eta0*(E/h);
+        array_f[1] = phi0;
+        array_a[N] = eta1*(E/h);
+        array_b[N] = zeta1+eta1*(E/h);
+        array_c[N] = 0;
+        array_f[N] = phi1;
 
-       /* arr[0] = u0;
-        xData2.add(0d);
-        yData2.add(u0);
-        i = 1;*/
+        // Double-sweep algorithm
+        array_sol = ProgonkaAlgorithm(N, array_a, array_b, array_c, array_f);
+
         int i = 1;
         for(double x=h; x<=1; x+=h, ++i) {
             addCoord(x, array_sol[i]);
@@ -286,17 +252,14 @@ public class Main extends JFrame{
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
 
         // Compute the error and display, redefine error function
-        // error = Error(arr, arr_sol);
-        chart.setTitle("error: "+error);
+        error = Error(null, array_sol);
+        chart.setTitle("Error: "+error);
     }
 
     // Main
     public static void main(String[] args) {
         Setup();
-        // Create Chart
         chart = new XYChartBuilder().width(1800).height(1000).xAxisTitle("X").yAxisTitle("Y").build();
-
-        // Customize Chart
         chart.getStyler().setChartBackgroundColor(Color.LIGHT_GRAY);
         chart.getStyler().setCursorBackgroundColor(Color.GRAY);
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideS);
