@@ -47,7 +47,7 @@ public class Main extends JFrame{
         mainPanel.setBackground(Color.WHITE);
         add(mainPanel, BorderLayout.CENTER);
         // Parameter, methods selection
-        Integer[] choicesNodes = { 8,12,16,24,32,48,64,96,128,192,256,384,512,768,1024,1536,2048,3072,4096};
+        Integer[] choicesNodes = { 8,12,16,24,32,48,64,96,128,192,256,384,512,768,1024,1536,2048,3072,4096,6144,8192};
         String[] choicesProblem = { "Problem 1", "Problem 2", "Problem 4" };
         String[] choicesMethod = { "Central difference (gamma 1)", "Directional difference (gamma 2)" };
         Double[] choicesEpsilon = { 0.5,0.3,0.1,0.08,0.0625,0.015 };
@@ -114,7 +114,8 @@ public class Main extends JFrame{
     private static double SolutionFunction(double x) {
         return switch (problem) {
             case 0 -> phi0+((phi1-phi0+E-0.5)*(Math.pow(Math.E, -x/E)-1))/(Math.pow(Math.E, -1/E)-1)-E*x+0.5*x*x;
-            case 1 -> phi0-E*E+((phi0-phi1-E-E*E+0.5)*(Math.pow(Math.E,-x/E)-2))/(2-Math.pow(Math.E,-1/E)-E*x+0.5*x*x);
+            case 1 -> phi1+E-0.5+(Math.pow(Math.E,-x/E)-Math.pow(Math.E,-1/E))*(phi0-phi1-E-E*E+0.5)/(2-Math.pow(Math.E,-1/E))-E*x+0.5*x*x;
+            //  case 1 -> phi0-E*E+((phi0-phi1-E-E*E+0.5)*(Math.pow(Math.E,-x/E)-2))/(2-Math.pow(Math.E,-1/E)-E*x+0.5*x*x);
             case 2 -> x/(1+x)+(Math.pow(Math.E,-1/E)-Math.pow(Math.E,-(2*x)/(E*(1+x))))/(2*(1-Math.pow(Math.E,-1/E)));
             default -> 0;
         };
