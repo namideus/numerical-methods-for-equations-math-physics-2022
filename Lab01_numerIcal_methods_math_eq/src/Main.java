@@ -39,7 +39,6 @@ public class Main extends JFrame{
     // Series names
     private static final String seriesName1 = "Numerical solution";
     private static final String seriesName2 = "Analytical solution";
-
     // Building the user interface
     public Main() {
         setLayout(new BorderLayout());
@@ -82,7 +81,6 @@ public class Main extends JFrame{
             repaint();
         });
     }
-
     // Algorithm of "progonka"
     private static double[] ProgonkaAlgorithm(int n, double[] A, double[] B, double[] C, double[] f) {
         double[] U = new double[n+1];
@@ -100,7 +98,6 @@ public class Main extends JFrame{
         }
         return U;
     }
-
     // Test problems
     private static double Function(double x) {
         return switch (problem) {
@@ -109,7 +106,6 @@ public class Main extends JFrame{
             default -> 0;
         };
     }
-
     // Analytical solutions.
     private static double SolutionFunction(double x) {
         return switch (problem) {
@@ -120,7 +116,6 @@ public class Main extends JFrame{
             default -> 0;
         };
     }
-
     // Coefficient "a"
     private static double CoefficientA(double x) {
         return switch (problem) {
