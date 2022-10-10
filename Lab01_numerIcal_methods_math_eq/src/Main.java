@@ -111,7 +111,6 @@ public class Main extends JFrame{
         return switch (problem) {
             case 0 -> phi0+((phi1-phi0+E-0.5)*(Math.pow(Math.E, -x/E)-1))/(Math.pow(Math.E, -1/E)-1)-E*x+0.5*x*x;
             case 1 -> phi1+E-0.5+(Math.pow(Math.E,-x/E)-Math.pow(Math.E,-1/E))*(phi0-phi1-E-E*E+0.5)/(2-Math.pow(Math.E,-1/E))-E*x+0.5*x*x;
-            //  case 1 -> phi0-E*E+((phi0-phi1-E-E*E+0.5)*(Math.pow(Math.E,-x/E)-2))/(2-Math.pow(Math.E,-1/E)-E*x+0.5*x*x);
             case 2 -> x/(1+x)+(Math.pow(Math.E,-1/E)-Math.pow(Math.E,-(2*x)/(E*(1+x))))/(2*(1-Math.pow(Math.E,-1/E)));
             default -> 0;
         };
