@@ -34,7 +34,7 @@ public class Main extends JFrame{
     private final JComboBox<Integer> nodesChoice;
     private final JComboBox<String> problemsChoice,methodChoice;
     private final JComboBox<Double> epsilonChoice;
-    private final JTextField epsilonInput,thetaInput;
+    private final JTextField epsilonInput,phi0Input, phi1Input;
     private JButton display = new JButton("Display");
     // Series names
     private static final String seriesName1 = "Numerical solution";
@@ -56,8 +56,10 @@ public class Main extends JFrame{
         epsilonChoice = new JComboBox<>(choicesEpsilon);                // Epsilon selection
         epsilonInput = new JTextField("0.0135");
         epsilonInput.setToolTipText("Epsilon");
-        thetaInput = new JTextField("1");
-        thetaInput.setToolTipText("Theta");
+        phi0Input = new JTextField("0");
+        phi0Input.setToolTipText("Phi 0");
+        phi1Input = new JTextField("1");
+        phi1Input.setToolTipText("Phi 1");
         // Control panel
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new GridLayout(25, 1));
@@ -66,13 +68,15 @@ public class Main extends JFrame{
         controlPanel.add(problemsChoice);
         controlPanel.add(methodChoice);
         controlPanel.add(epsilonInput);
-        controlPanel.add(thetaInput);
+        controlPanel.add(phi0Input);
+        controlPanel.add(phi1Input);
         controlPanel.add(display);
         add(controlPanel, BorderLayout.EAST);
         // Listen to display button click, update the graph
         display.addActionListener(actionEvent -> {
             E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
-            theta = Double.parseDouble(Objects.requireNonNull(thetaInput.getText()));
+            phi0 = Double.parseDouble(Objects.requireNonNull(phi0Input.getText()));
+            phi1 = Double.parseDouble(Objects.requireNonNull(phi1Input.getText()));
             N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());
             problem = problemsChoice.getSelectedIndex();
             method = methodChoice.getSelectedIndex();
@@ -163,15 +167,15 @@ public class Main extends JFrame{
             case 0 -> {
                 zeta0 = zeta1 = 1.0;
                 eta0 = eta1 = 0.0;
-                phi0 = 0;
-                phi1 = 1;
+             //   phi0 = 0;
+             //   phi1 = 1;
             }
             case 1 -> {
                 zeta0 = zeta1 = 1.0;
                 eta0 = 1.0;
                 eta1 = 0.0;
-                phi0 = 0;
-                phi1 = 1;
+             //   phi0 = 0;
+             //   phi1 = 1;
             }
             case 2 -> {
                 zeta0 = zeta1 = 2.0;
