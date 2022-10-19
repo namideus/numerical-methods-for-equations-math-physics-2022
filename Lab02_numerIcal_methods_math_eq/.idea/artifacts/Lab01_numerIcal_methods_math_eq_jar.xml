@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Lab01_numerIcal_methods_math_eq:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Lab01_numerIcal_methods_math_eq_jar</output-path>
+    <root id="archive" name="Lab01_numerIcal_methods_math_eq.jar">
+      <element id="module-output" name="Lab01_numerIcal_methods_math_eq" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/xchart-3.8.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
