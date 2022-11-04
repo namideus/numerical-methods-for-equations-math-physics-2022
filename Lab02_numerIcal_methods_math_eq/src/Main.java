@@ -6,17 +6,19 @@ import org.knowm.xchart.style.Styler;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
 /**
+ * @forked by Mirzaali Ruzimatov
  * @author Yiman Altynbek uulu
- *
  * course: Numerical methods for equations of mathematical physics.
  *
  *
- * 2022/10/07
+ * 2022/10/20
  * */
 
 public class Main extends JFrame{
@@ -47,31 +49,63 @@ public class Main extends JFrame{
         add(mainPanel, BorderLayout.CENTER);
         // Parameter, methods selection
         Integer[] choicesNodes = { 8,12,16,24,32,48,64,96,128,192,256,384,512,768,1024,1536,2048,3072,4096,6144,8192};
-        String[] choicesProblem = { "Problem 1", "Problem 2", "Problem 4" };
-        String[] choicesMethod = { "Central difference (gamma 1)", "Directional difference (gamma 2)" };
+        String[] choicesProblem = { "Problem 1", "Problem 2", "Problem №2" };
+        String[] choicesMethod = { "With central difference", "Ilin A.M." };
         Double[] choicesEpsilon = { 0.5,0.3,0.1,0.08,0.0625,0.015 };
+        JLabel nodesLabel = new JLabel("Nodes");
         nodesChoice = new JComboBox<>(choicesNodes);                    // Node selection
+        JLabel problemLabel = new JLabel("Problem");
         problemsChoice = new JComboBox<>(choicesProblem);               // Problems selection
         methodChoice = new JComboBox<>(choicesMethod);                  // Method selection
+        JLabel methodLabel = new JLabel("Method");
         epsilonChoice = new JComboBox<>(choicesEpsilon);                // Epsilon selection
+        JLabel epsilonLabel = new JLabel("Epsilon");
         epsilonInput = new JTextField("0.0135");
         epsilonInput.setToolTipText("Epsilon");
+        JLabel phi0Label = new JLabel("φ0");
         phi0Input = new JTextField("0");
         phi0Input.setToolTipText("Phi 0");
         phi1Input = new JTextField("1");
+        JLabel phi1Label = new JLabel("φ1");
+
         phi1Input.setToolTipText("Phi 1");
         // Control panel
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new GridLayout(25, 1));
         controlPanel.setBackground(Color.LIGHT_GRAY);
+        controlPanel.add(nodesLabel);
         controlPanel.add(nodesChoice);
+        controlPanel.add(problemLabel);
         controlPanel.add(problemsChoice);
+        controlPanel.add(methodLabel);
         controlPanel.add(methodChoice);
+        controlPanel.add(epsilonLabel);
         controlPanel.add(epsilonInput);
+
+        controlPanel.add(phi0Label);
         controlPanel.add(phi0Input);
+        controlPanel.add(phi1Label);
         controlPanel.add(phi1Input);
         controlPanel.add(display);
         add(controlPanel, BorderLayout.EAST);
+        ActionListener actionListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
+                phi0 = Double.parseDouble(Objects.requireNonNull(phi0Input.getText()));
+                phi1 = Double.parseDouble(Objects.requireNonNull(phi1Input.getText()));
+                N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());
+                problem = problemsChoice.getSelectedIndex();
+                method = methodChoice.getSelectedIndex();
+                ApplyNumericalMethod();
+                Draw();
+                repaint();
+            }
+        };
+        problemsChoice.addActionListener(actionListener);
+        methodChoice.addActionListener(actionListener);
+        nodesChoice.addActionListener(actionListener);
+        epsilonInput.addActionListener(actionListener);
         // Listen to display button click, update the graph
         display.addActionListener(actionEvent -> {
             E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
@@ -105,25 +139,46 @@ public class Main extends JFrame{
     // Test problems
     private static double Function(double x) {
         return switch (problem) {
-            case 0, 1 -> x;
-            case 2 -> ((1-2*x)/(1+x)-E-Math.pow(Math.E,-1/E)/(1-Math.pow(Math.E,-1/E)))*(2/Math.pow(1+x,3));
+            case 0, 1 -> (1-x*x*x);
+            case 2 -> (1-2*x)/Math.pow((1+x),2)*(E*(1+x)-1)-E;
             default -> 0;
         };
     }
     // Analytical solutions.
     private static double SolutionFunction(double x) {
         return switch (problem) {
-            case 0 -> phi0+((phi1-phi0+E-0.5)*(Math.pow(Math.E, -x/E)-1))/(Math.pow(Math.E, -1/E)-1)-E*x+0.5*x*x;
-            case 1 -> phi1+E-0.5+(Math.pow(Math.E,-x/E)-Math.pow(Math.E,-1/E))*(phi0-phi1-E-E*E+0.5)/(2-Math.pow(Math.E,-1/E))-E*x+0.5*x*x;
-            case 2 -> x/(1+x)+(Math.pow(Math.E,-1/E)-Math.pow(Math.E,-(2*x)/(E*(1+x))))/(2*(1-Math.pow(Math.E,-1/E)));
+//            Math.pow(Math.E, 1/E)
+//            Math.pow(Math.E, x/E)
+
+            case 0 -> 1/(4-4*Math.pow(Math.E, 1/E)) *
+                    (       4*phi0*Math.pow(Math.E,x/E) - 4*phi0*Math.pow(Math.E, 1/E)
+                            - 4*phi1*Math.pow(Math.E,x/E) + 4*phi1
+                            - 24*E*E*E - 12*E*E - 4*E - Math.pow(Math.E, 1/E) * Math.pow(x,4) + Math.pow(x,4)
+                            - 4*Math.pow(Math.E, 1/E)*E*Math.pow(x, 3) + 4*E*Math.pow(x, 3)
+                            - 12*Math.pow(Math.E, 1/E)*E*E*x*x + 12*E*E*x*x
+                            - 24*Math.pow(Math.E, 1/E)*Math.pow(E,3)*x + 24*Math.pow(E,3)*x + 24*Math.pow(E,3)*Math.pow(Math.E,x/E)
+                            + 12*Math.pow(E,2)*Math.pow(Math.E,x/E) + 4*x*Math.pow(Math.E, 1/E) - 3*Math.pow(Math.E,x/E)
+                            + 4*E*Math.pow(Math.E,x/E) - 4*x + 3
+                    ) ;
+            case 1 -> 1 / (4-8*Math.pow(Math.E, 1/E)) *
+                    (
+                            - 8*phi0*Math.pow(Math.E, 1/E) + 4*phi0*Math.pow(Math.E,x/E)  - 4*phi1*Math.pow(Math.E,x/E) + 4*phi1
+                                    - 24*Math.pow(E,4) - 48*Math.pow(E,3) - 24*Math.pow(E,2) - 4*E - 2*Math.pow(Math.E, 1/E)*Math.pow(x,4)
+                                    + Math.pow(x,4) - 8*Math.pow(Math.E, 1/E)*E*Math.pow(x,3) + 4*E*Math.pow(x,3)
+                                    - 24*Math.pow(Math.E, 1/E)*E*E*x*x + 12*E*E*x*x
+                                    + 24*Math.pow(E,4)*Math.pow(Math.E, x/E) - 48*Math.pow(Math.E, 1/E)*Math.pow(E,3)*x
+                                    + 24*Math.pow(E,3)*x + 48*Math.pow(E,3)*Math.pow(Math.E, x/E) + 24*E*E*Math.pow(Math.E, x/E)
+                                    + 8*Math.pow(Math.E, 1/E)*x - 3*Math.pow(Math.E, x/E) + 4*E*Math.pow(Math.E, x/E) - 4*x + 3
+                    );
+            case 2 -> x*(1-x)/2 + (( Math.pow(Math.E,-1/E) - Math.pow(Math.E,-2/(E*(1+x))) ) / (2*(1-Math.pow(Math.E,-1/E)) ));
             default -> 0;
         };
     }
     // Coefficient "a"
     private static double CoefficientA(double x) {
         return switch (problem) {
-            case 0, 1 -> 1.0;
-            case 2 -> 2.0/((1+x)*(1+x));
+            case 0, 1 -> -1.0;
+            case 2 -> ( 2.0*E/(1+x) ) - ( 2/Math.pow((1+x),2) );
             default -> 0;
         };
     }
@@ -131,8 +186,8 @@ public class Main extends JFrame{
     // Coefficient "b"
     private static double CoefficientB(double x) {
         return switch (problem) {
-            case 0, 1 -> 0.0;
-            case 2 -> 4.0/((1+x)*(1+x)*(1+x));
+            case 0, 1, 2 -> 0.0;
+//            case 2 -> 0.0;
             default -> 0;
         };
     }
@@ -167,22 +222,22 @@ public class Main extends JFrame{
             case 0 -> {
                 zeta0 = zeta1 = 1.0;
                 eta0 = eta1 = 0.0;
-             //   phi0 = 0;
-             //   phi1 = 1;
+                //   phi0 = 0;
+                //   phi1 = 1;
             }
             case 1 -> {
                 zeta0 = zeta1 = 1.0;
-                eta0 = 1.0;
-                eta1 = 0.0;
-             //   phi0 = 0;
-             //   phi1 = 1;
+                eta0 = 0.0;
+                eta1 = 1.0;
+                //   phi0 = 0;
+                //   phi1 = 1;
             }
             case 2 -> {
-                zeta0 = zeta1 = 2.0;
-                eta0 = 1.0;
-                eta1 = 4.0;
-                phi0 = -(1+E+1/(1-Math.pow(Math.E,-1/E)));
-                phi1 = 1+E+Math.pow(Math.E,-1/E)/(1-Math.pow(Math.E,-1/E));
+                zeta0 = zeta1 = 1.0;
+                eta0 = eta1= 0.0;
+
+                phi0 = 0.5*Math.pow(Math.E,-1/E);
+                phi1 = 0;
             }
         }
         // Initialize arrays and variables
@@ -212,7 +267,7 @@ public class Main extends JFrame{
                 break;
             case 1:
                 for (int i = 1; i <= N; i++)
-                    array_gamma[i] = 1.0+Math.abs(array_r[i]);
+                    array_gamma[i] = array_r[i]*(Math.pow(Math.E, array_r[i]) + Math.pow(Math.E, -array_r[i]))/(Math.pow(Math.E, array_r[i]) - Math.pow(Math.E, -array_r[i]))  ;
                 break;
         }
         // Compute A, B, C, F arrays
