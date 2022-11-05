@@ -50,8 +50,8 @@ public class Main extends JFrame{
         // Parameter, methods selection
         Integer[] choicesNodes = {9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193};
         Double[] choicesCurant = {0.1,0.5,0.8,1.0,5.0,10.0,20.0,50.0};
-        String[] choicesProblem = { "Problem 1", "Problem 2", "Problem №2" };
-        String[] choicesMethod = { "With central difference", "Ilin A.M." };
+        String[] choicesProblem = {"Трансформация «k»-й гармоники ряда Фурье"};
+        String[] choicesMethod = {"Явная схема (1)", "Схема Кранка-Николсона (2)", "Схема, сохраняющая монотонность (5)"};
         Double[] choicesEpsilon = { 0.5,0.3,0.1,0.08,0.0625,0.015 };
         JLabel nodesLabel = new JLabel("Nodes");
         nodesChoice = new JComboBox<>(choicesNodes);                    // Node selection
@@ -151,8 +151,8 @@ public class Main extends JFrame{
     //------------------------------------------------------------------------------------------------------------------------------
 
     //-------------------------------------------------------NUMERICAL-METHODS------------------------------------------------------
-    // Algorithm of "progonka"
-    private static double[] ProgonkaAlgorithm(int n, double[] A, double[] B, double[] C, double[] f) {
+    // Double sweep algorithm
+    private static double[] DoubleSweepAlgorithm(int n, double[] A, double[] B, double[] C, double[] f) {
         double[] U = new double[n+1];
         double[] alpha = new double[n+1];
         double[] beta = new double[n+1];
@@ -242,7 +242,8 @@ public class Main extends JFrame{
         // Select method
         switch (method) {
             case 0 -> theta = 0;
-            case 1 -> theta = 1.0;
+            case 1 -> theta = 0.5;
+            case 2 -> theta = Math.max(0.5, 1-3.0/(4*k));
         }
         // Compute A, B, C, F arrays
         for (int i = 1; i <= N; i++) {
@@ -261,8 +262,8 @@ public class Main extends JFrame{
         array_b[N] = zeta1+eta1*(E/h);
         array_c[N] = 0;
         array_f[N] = phi1;
-        // Double-sweep algorithm
-        array_sol = ProgonkaAlgorithm(N, array_a, array_b, array_c, array_f);
+        // Call double-sweep algorithm
+        array_sol = DoubleSweepAlgorithm(N, array_a, array_b, array_c, array_f);
         // Calculate error
         error = Error(array_sol_origin, array_sol);
     }
