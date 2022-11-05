@@ -24,9 +24,9 @@ import java.util.Objects;
 
 public class Main extends JFrame{
     // Double
-    private static double[] array_a, array_b, array_c, array_f, array_r, array_gamma, array_sol, array_sol_origin;
+    private static double[] x, array_a, array_b, array_c, array_f, array_r, array_gamma, array_sol, array_sol_origin;
     // Variables
-    private static double x, error, h, t, tau, curant, Tmax, a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
+    private static double error, h, t, tau, curant, Tmax, a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
     // Integer
     private static int N = 8, M, T, k, problem = 0, method = 0;
     // X and Y coordinate lists
@@ -132,8 +132,7 @@ public class Main extends JFrame{
         yData2.clear();
         // Coordinates of numerical solution
         for (int i = 1; i <= N; i++) {
-            x = (i-1.0)/(N-1);
-            addCoord(x, array_sol[i]);
+            addCoord(x[i], array_sol[i]);
         }
         // Draw analytical solution
         for(double x=0; x<=1; x+=0.001) {
@@ -208,6 +207,7 @@ public class Main extends JFrame{
         tau = Tmax/M;
         curant = (E*tau)/(h*h);
 
+        x = new double[N+1];
         array_a = new double[N+1];
         array_b = new double[N+1];
         array_c = new double[N+1];
@@ -215,14 +215,17 @@ public class Main extends JFrame{
         array_r = new double[N+1];
         array_gamma = new double[N+1];
         array_sol_origin = new double[N+1];
+
+        // Grid
+        for (int i = 1; i <= N; i++)
+            x[i] = (i-1.0)/(N-1);
+
         // Analytical solution in the grid
         for (int i = 1; i <= N; i++) {
-            x = (i-1.0)/(N-1);
-           // array_sol_origin[i] = SolutionFunction(x);
+            //array_sol_origin[i] = SolutionFunction(x[i]);
         }
         // Compute R array
         for (int i = 1; i <= N; i++) {
-            x = (i-1.0)/(N-1);
             //array_r[i] = (CoefficientA(x)*h)/(2*E);
         }
         // Select method
@@ -233,7 +236,7 @@ public class Main extends JFrame{
         }
         // Compute A, B, C, F arrays
         for (int i = 1; i <= N; i++) {
-            x = (i-1.0)/(N-1);
+            //x = (i-1.0)/(N-1);
             array_a[i] = E/(h*h)*(array_gamma[i]-array_r[i]);
             //array_b[i] = (2*E*array_gamma[i])/(h*h)+CoefficientB(x);
             array_c[i] = E/(h*h)*(array_gamma[i]+array_r[i]);
