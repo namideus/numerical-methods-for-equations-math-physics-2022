@@ -3,6 +3,7 @@ import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.Styler;
+import org.knowm.xchart.style.theme.Theme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,19 +19,19 @@ import java.util.Objects;
  * course: Numerical methods for equations of mathematical physics.
  *
  *
- * 2022/10/20
+ * 2022/11/17
  * */
 
 public class Main extends JFrame{
     // Double
     private static double[] array_a, array_b, array_c, array_f, array_r, array_gamma, array_sol, array_sol_origin;
     // Variables
-    private static double x, error, h, a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
+    private static double x, error, h, t, tau, curant, Tmax, a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
     // Integer
-    private static int N = 8, problem = 0, method = 0; // M:1,2;
+    private static int N = 8, M, T, k, problem = 0, method = 0;
     // X and Y coordinate lists
     private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
-    // User Interface (Java Swing)
+    // GUI (Java Swing)
     private static XYChart chart;
     private static XYSeries testFunctionSeries, interpolateFunctionSeries;
     private final JComboBox<Integer> nodesChoice;
@@ -41,14 +42,14 @@ public class Main extends JFrame{
     // Series names
     private static final String seriesName1 = "Numerical solution";
     private static final String seriesName2 = "Analytical solution";
-    // Building the user interface
+    //------------------------------------------------------JFRAME------------------------------------------------------------------
     public Main() {
         setLayout(new BorderLayout());
         JPanel mainPanel = new JPanel();
-        mainPanel.setBackground(Color.WHITE);
         add(mainPanel, BorderLayout.CENTER);
         // Parameter, methods selection
-        Integer[] choicesNodes = { 8,12,16,24,32,48,64,96,128,192,256,384,512,768,1024,1536,2048,3072,4096,6144,8192};
+        Integer[] choicesNodes = {9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193};
+        Double[] choicesCurant = {0.1,0.5,0.8,1.0,5.0,10.0,20.0,50.0};
         String[] choicesProblem = { "Problem 1", "Problem 2", "Problem №2" };
         String[] choicesMethod = { "With central difference", "Ilin A.M." };
         Double[] choicesEpsilon = { 0.5,0.3,0.1,0.08,0.0625,0.015 };
@@ -67,12 +68,11 @@ public class Main extends JFrame{
         phi0Input.setToolTipText("Phi 0");
         phi1Input = new JTextField("1");
         JLabel phi1Label = new JLabel("φ1");
-
         phi1Input.setToolTipText("Phi 1");
         // Control panel
         JPanel controlPanel = new JPanel();
-        controlPanel.setLayout(new GridLayout(25, 1));
-        controlPanel.setBackground(Color.LIGHT_GRAY);
+        controlPanel.setLayout(new GridLayout(40, 1));
+        controlPanel.setBackground(Color.lightGray);
         controlPanel.add(nodesLabel);
         controlPanel.add(nodesChoice);
         controlPanel.add(problemLabel);
@@ -81,16 +81,15 @@ public class Main extends JFrame{
         controlPanel.add(methodChoice);
         controlPanel.add(epsilonLabel);
         controlPanel.add(epsilonInput);
-
         controlPanel.add(phi0Label);
         controlPanel.add(phi0Input);
         controlPanel.add(phi1Label);
         controlPanel.add(phi1Input);
         controlPanel.add(display);
         add(controlPanel, BorderLayout.EAST);
-        ActionListener actionListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+
+        ActionListener actionListener = e -> {
+            try {
                 E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
                 phi0 = Double.parseDouble(Objects.requireNonNull(phi0Input.getText()));
                 phi1 = Double.parseDouble(Objects.requireNonNull(phi1Input.getText()));
@@ -98,27 +97,60 @@ public class Main extends JFrame{
                 problem = problemsChoice.getSelectedIndex();
                 method = methodChoice.getSelectedIndex();
                 ApplyNumericalMethod();
-                Draw();
-                repaint();
+                Draw(this);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
             }
         };
         problemsChoice.addActionListener(actionListener);
         methodChoice.addActionListener(actionListener);
         nodesChoice.addActionListener(actionListener);
         epsilonInput.addActionListener(actionListener);
-        // Listen to display button click, update the graph
-        display.addActionListener(actionEvent -> {
-            E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
-            phi0 = Double.parseDouble(Objects.requireNonNull(phi0Input.getText()));
-            phi1 = Double.parseDouble(Objects.requireNonNull(phi1Input.getText()));
-            N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());
-            problem = problemsChoice.getSelectedIndex();
-            method = methodChoice.getSelectedIndex();
-            ApplyNumericalMethod();
-            Draw();
-            repaint();
-        });
+        display.addActionListener(actionListener);
     }
+    //------------------------------------------------------------------------------------------------------------------------------
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    private static void Setup() {
+        xData1 = new ArrayList<>();
+        yData1 = new ArrayList<>();
+        xData2 = new ArrayList<>();
+        yData2 = new ArrayList<>();
+        xData1.add(0d);
+        yData1.add(0d);
+        xData2.add(0d);
+        yData2.add(0d);
+    }
+    public static void addCoord(double x, double y) {
+        xData1.add(x);
+        yData1.add(y);
+    }
+    // Chart solutions
+    private static void Draw(JFrame jFrame) throws InterruptedException {
+        // First clear up array lists
+        xData1.clear();
+        yData1.clear();
+        xData2.clear();
+        yData2.clear();
+        // Coordinates of numerical solution
+        for (int i = 1; i <= N; i++) {
+            x = (i-1.0)/(N-1);
+            addCoord(x, array_sol[i]);
+        }
+        // Draw analytical solution
+        for(double x=0; x<=1; x+=0.001) {
+            xData2.add(x);
+            // yData2.add(SolutionFunction(x));
+        }
+        // Update graphs
+        chart.updateXYSeries(seriesName1, xData1, yData1, null);
+        chart.updateXYSeries(seriesName2, xData2, yData2, null);
+        chart.setTitle("Error: "+error);
+        jFrame.repaint();
+    }
+    //------------------------------------------------------------------------------------------------------------------------------
+
+    //-------------------------------------------------------NUMERICAL-METHODS------------------------------------------------------
     // Algorithm of "progonka"
     private static double[] ProgonkaAlgorithm(int n, double[] A, double[] B, double[] C, double[] f) {
         double[] U = new double[n+1];
@@ -136,62 +168,27 @@ public class Main extends JFrame{
         }
         return U;
     }
-    // Test problems
-    private static double Function(double x) {
-        return switch (problem) {
-            case 0, 1 -> (1-x*x*x);
-            case 2 -> (1-2*x)/Math.pow((1+x),2)*(E*(1+x)-1)-E;
-            default -> 0;
-        };
+    // RHS function
+    private static double Function(double x, double t) {
+        return 0.0;
     }
-    // Analytical solutions.
-    private static double SolutionFunction(double x) {
-        return switch (problem) {
-//            Math.pow(Math.E, 1/E)
-//            Math.pow(Math.E, x/E)
-
-            case 0 -> 1/(4-4*Math.pow(Math.E, 1/E)) *
-                    (       4*phi0*Math.pow(Math.E,x/E) - 4*phi0*Math.pow(Math.E, 1/E)
-                            - 4*phi1*Math.pow(Math.E,x/E) + 4*phi1
-                            - 24*E*E*E - 12*E*E - 4*E - Math.pow(Math.E, 1/E) * Math.pow(x,4) + Math.pow(x,4)
-                            - 4*Math.pow(Math.E, 1/E)*E*Math.pow(x, 3) + 4*E*Math.pow(x, 3)
-                            - 12*Math.pow(Math.E, 1/E)*E*E*x*x + 12*E*E*x*x
-                            - 24*Math.pow(Math.E, 1/E)*Math.pow(E,3)*x + 24*Math.pow(E,3)*x + 24*Math.pow(E,3)*Math.pow(Math.E,x/E)
-                            + 12*Math.pow(E,2)*Math.pow(Math.E,x/E) + 4*x*Math.pow(Math.E, 1/E) - 3*Math.pow(Math.E,x/E)
-                            + 4*E*Math.pow(Math.E,x/E) - 4*x + 3
-                    ) ;
-            case 1 -> 1 / (4-8*Math.pow(Math.E, 1/E)) *
-                    (
-                            - 8*phi0*Math.pow(Math.E, 1/E) + 4*phi0*Math.pow(Math.E,x/E)  - 4*phi1*Math.pow(Math.E,x/E) + 4*phi1
-                                    - 24*Math.pow(E,4) - 48*Math.pow(E,3) - 24*Math.pow(E,2) - 4*E - 2*Math.pow(Math.E, 1/E)*Math.pow(x,4)
-                                    + Math.pow(x,4) - 8*Math.pow(Math.E, 1/E)*E*Math.pow(x,3) + 4*E*Math.pow(x,3)
-                                    - 24*Math.pow(Math.E, 1/E)*E*E*x*x + 12*E*E*x*x
-                                    + 24*Math.pow(E,4)*Math.pow(Math.E, x/E) - 48*Math.pow(Math.E, 1/E)*Math.pow(E,3)*x
-                                    + 24*Math.pow(E,3)*x + 48*Math.pow(E,3)*Math.pow(Math.E, x/E) + 24*E*E*Math.pow(Math.E, x/E)
-                                    + 8*Math.pow(Math.E, 1/E)*x - 3*Math.pow(Math.E, x/E) + 4*E*Math.pow(Math.E, x/E) - 4*x + 3
-                    );
-            case 2 -> x*(1-x)/2 + (( Math.pow(Math.E,-1/E) - Math.pow(Math.E,-2/(E*(1+x))) ) / (2*(1-Math.pow(Math.E,-1/E)) ));
-            default -> 0;
-        };
+    // Analytical solution
+    private static double SolutionFunction(double x, double t) {
+        return Math.sin(Math.PI*k*x)*Math.pow(Math.E,-(Math.PI*Math.PI*k*k))+x*Psi1(t)+(1-x)*Psi0(t);
     }
-    // Coefficient "a"
-    private static double CoefficientA(double x) {
-        return switch (problem) {
-            case 0, 1 -> -1.0;
-            case 2 -> ( 2.0*E/(1+x) ) - ( 2/Math.pow((1+x),2) );
-            default -> 0;
-        };
+    // Phi(x)
+    private static double Phi(double x, double t) {
+        return Math.sin(Math.PI*k*x)+x*Psi1(t)+(1-x)*Psi0(t);
     }
-
-    // Coefficient "b"
-    private static double CoefficientB(double x) {
-        return switch (problem) {
-            case 0, 1, 2 -> 0.0;
-//            case 2 -> 0.0;
-            default -> 0;
-        };
+    // Psi0(t)
+    private static double Psi0(double t) {
+        return 1.0;
     }
-    // Compute error
+    // Psi1(t)
+    private static double Psi1(double t) {
+        return 1.0;
+    }
+    // Error
     public static double Error(double[] a1, double[] a2) {
         double max1=0, max2=0;
         for (int i=1; i<=N; i++) {
@@ -200,48 +197,31 @@ public class Main extends JFrame{
         }
         return max1/max2*100;
     }
-    // Set up
-    private static void Setup() {
-        xData1 = new ArrayList<>();
-        yData1 = new ArrayList<>();
-        xData2 = new ArrayList<>();
-        yData2 = new ArrayList<>();
-        xData1.add(0d);
-        yData1.add(0d);
-        xData2.add(0d);
-        yData2.add(0d);
-    }
-    public static void addCoord(double x, double y) {
-        xData1.add(x);
-        yData1.add(y);
-    }
-    // Apply numerical method and chart the end result
+    // Numerical method
     private static void ApplyNumericalMethod() {
         // Initial & boundary values
         switch (problem) {
             case 0 -> {
                 zeta0 = zeta1 = 1.0;
                 eta0 = eta1 = 0.0;
-                //   phi0 = 0;
-                //   phi1 = 1;
             }
             case 1 -> {
                 zeta0 = zeta1 = 1.0;
                 eta0 = 0.0;
                 eta1 = 1.0;
-                //   phi0 = 0;
-                //   phi1 = 1;
             }
             case 2 -> {
                 zeta0 = zeta1 = 1.0;
                 eta0 = eta1= 0.0;
-
                 phi0 = 0.5*Math.pow(Math.E,-1/E);
                 phi1 = 0;
             }
         }
         // Initialize arrays and variables
         h = 1.0/(N-1);
+        tau = Tmax/M;
+        curant = (E*tau)/(h*h);
+
         array_a = new double[N+1];
         array_b = new double[N+1];
         array_c = new double[N+1];
@@ -252,31 +232,25 @@ public class Main extends JFrame{
         // Analytical solution in the grid
         for (int i = 1; i <= N; i++) {
             x = (i-1.0)/(N-1);
-            array_sol_origin[i] = SolutionFunction(x);
+           // array_sol_origin[i] = SolutionFunction(x);
         }
         // Compute R array
         for (int i = 1; i <= N; i++) {
             x = (i-1.0)/(N-1);
-            array_r[i] = (CoefficientA(x)*h)/(2*E);
+            //array_r[i] = (CoefficientA(x)*h)/(2*E);
         }
-        // Compute gamma array according to a selected difference method
-        switch(method) {
-            case 0:
-                for (int i = 1; i <= N; i++)
-                    array_gamma[i] = 1.0;
-                break;
-            case 1:
-                for (int i = 1; i <= N; i++)
-                    array_gamma[i] = array_r[i]*(Math.pow(Math.E, array_r[i]) + Math.pow(Math.E, -array_r[i]))/(Math.pow(Math.E, array_r[i]) - Math.pow(Math.E, -array_r[i]))  ;
-                break;
+        // Select method
+        switch (method) {
+            case 0 -> theta = 0;
+            case 1 -> theta = 1.0;
         }
         // Compute A, B, C, F arrays
         for (int i = 1; i <= N; i++) {
             x = (i-1.0)/(N-1);
             array_a[i] = E/(h*h)*(array_gamma[i]-array_r[i]);
-            array_b[i] = (2*E*array_gamma[i])/(h*h)+CoefficientB(x);
+            //array_b[i] = (2*E*array_gamma[i])/(h*h)+CoefficientB(x);
             array_c[i] = E/(h*h)*(array_gamma[i]+array_r[i]);
-            array_f[i] = -Function(x);
+           // array_f[i] = -Function(x);
         }
         // Initialize boundary/corner values
         array_a[1] = 0;
@@ -289,40 +263,23 @@ public class Main extends JFrame{
         array_f[N] = phi1;
         // Double-sweep algorithm
         array_sol = ProgonkaAlgorithm(N, array_a, array_b, array_c, array_f);
-        // Compute the error and display, redefine error function
+        // Calculate error
         error = Error(array_sol_origin, array_sol);
     }
-    // Chart solutions
-    private static void Draw() {
-        // First clear up array lists
-        xData1.clear();
-        yData1.clear();
-        xData2.clear();
-        yData2.clear();
-        // Coordinates of numerical solution
-        for (int i = 1; i <= N; i++) {
-            x = (i-1.0)/(N-1);
-            addCoord(x, array_sol[i]);
-        }
-        // Draw analytical solution
-        for(double x=0; x<=1; x+=0.001) {
-            xData2.add(x);
-            yData2.add(SolutionFunction(x));
-        }
-        // Update graphs
-        chart.updateXYSeries(seriesName1, xData1, yData1, null);
-        chart.updateXYSeries(seriesName2, xData2, yData2, null);
-        chart.setTitle("Error: "+error);
-    }
-    // Main
-    public static void main(String[] args) {
+    //------------------------------------------------------------------------------------------------------------------------------
+
+    //----------------------------------------------------------MAIN----------------------------------------------------------------
+    public static void main(String[] args) throws InterruptedException {
         Setup();
-        chart = new XYChartBuilder().width(1800).height(1000).xAxisTitle("X").yAxisTitle("Y").build();
-        chart.getStyler().setChartBackgroundColor(Color.LIGHT_GRAY);
-        chart.getStyler().setCursorBackgroundColor(Color.GRAY);
+        chart = new XYChartBuilder().width(1750).height(900).xAxisTitle("X").yAxisTitle("Y").build();
+        chart.getStyler().setChartBackgroundColor(Color.lightGray);
+        chart.getStyler().setCursorBackgroundColor(Color.lightGray);
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideS);
         chart.getStyler().setZoomEnabled(true);
         chart.getStyler().setZoomResetByButton(true);
+        chart.getStyler().setCursorEnabled(true);
+        chart.getStyler().setPlotBorderVisible(true);
+        chart.getStyler().setPlotMargin(10);
         chart.getStyler().setMarkerSize(0);
         // Series 1
         testFunctionSeries = chart.addSeries(seriesName1, xData1, yData1);
@@ -340,5 +297,38 @@ public class Main extends JFrame{
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+
+        // Testing
+        double phase = 0;
+        t = 0;
+        tau = 2;
+        Tmax = 213;
+        double[][] initdata = getSineData(phase);
+        int timer = 20;
+        while (true) {
+            phase += 2 * Math.PI * 2 / 20.0;
+            Thread.sleep(150);
+            final double[][] data = getSineData(phase);
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                chart.updateXYSeries(seriesName1, data[0], data[1], null);
+                frame.repaint();
+            });
+            t += tau;
+            if(t > Tmax) {
+                t = 0;
+                break;
+            }
+        }
+    }
+    private static double[][] getSineData(double phase) {
+        double[] xData = new double[100];
+        double[] yData = new double[100];
+        for (int i = 0; i < xData.length; i++) {
+            double radians = phase + (2 * Math.PI / xData.length * i);
+            xData[i] = radians;
+            yData[i] = Math.sin(radians);
+        }
+        return new double[][] { xData, yData };
     }
 }
+//------------------------------------------------------------------------------------------------------------------------------
