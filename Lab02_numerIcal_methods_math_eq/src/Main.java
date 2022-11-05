@@ -37,7 +37,7 @@ public class Main extends JFrame{
     private final JComboBox<Integer> nodesChoice;
     private final JComboBox<String> problemsChoice,methodChoice;
     private final JComboBox<Double> epsilonChoice;
-    private final JTextField epsilonInput,phi0Input, phi1Input;
+    private final JTextField epsilonInput,kInput;
     private JButton display = new JButton("Display");
     // Series names
     private static final String seriesName1 = "Numerical solution";
@@ -49,6 +49,7 @@ public class Main extends JFrame{
         add(mainPanel, BorderLayout.CENTER);
         // Parameter, methods selection
         Integer[] choicesNodes = {9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193};
+        // Integer[] choices = {9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193};
         Double[] choicesCurant = {0.1,0.5,0.8,1.0,5.0,10.0,20.0,50.0};
         String[] choicesProblem = {"Трансформация «k»-й гармоники ряда Фурье"};
         String[] choicesMethod = {"Явная схема (1)", "Схема Кранка-Николсона (2)", "Схема, сохраняющая монотонность (5)"};
@@ -63,12 +64,12 @@ public class Main extends JFrame{
         JLabel epsilonLabel = new JLabel("Epsilon");
         epsilonInput = new JTextField("0.0135");
         epsilonInput.setToolTipText("Epsilon");
-        JLabel phi0Label = new JLabel("φ0");
-        phi0Input = new JTextField("0");
-        phi0Input.setToolTipText("Phi 0");
-        phi1Input = new JTextField("1");
-        JLabel phi1Label = new JLabel("φ1");
-        phi1Input.setToolTipText("Phi 1");
+        JLabel kLabel = new JLabel("k");
+        kInput = new JTextField("1");
+        kInput.setToolTipText("k");
+        //phi1Input = new JTextField("1");
+        //JLabel phi1Label = new JLabel("φ1");
+        //phi1Input.setToolTipText("Phi 1");
         // Control panel
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new GridLayout(40, 1));
@@ -81,21 +82,18 @@ public class Main extends JFrame{
         controlPanel.add(methodChoice);
         controlPanel.add(epsilonLabel);
         controlPanel.add(epsilonInput);
-        controlPanel.add(phi0Label);
-        controlPanel.add(phi0Input);
-        controlPanel.add(phi1Label);
-        controlPanel.add(phi1Input);
+        controlPanel.add(kLabel);
+        controlPanel.add(kInput);
         controlPanel.add(display);
         add(controlPanel, BorderLayout.EAST);
 
         ActionListener actionListener = e -> {
             try {
-                E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
-                phi0 = Double.parseDouble(Objects.requireNonNull(phi0Input.getText()));
-                phi1 = Double.parseDouble(Objects.requireNonNull(phi1Input.getText()));
-                N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());
                 problem = problemsChoice.getSelectedIndex();
                 method = methodChoice.getSelectedIndex();
+                E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
+                k = Integer.parseInt(Objects.requireNonNull(kInput.getText()));
+                N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());
                 ApplyNumericalMethod();
                 Draw(this);
             } catch (InterruptedException ex) {
@@ -200,23 +198,11 @@ public class Main extends JFrame{
     // Numerical method
     private static void ApplyNumericalMethod() {
         // Initial & boundary values
-        switch (problem) {
-            case 0 -> {
-                zeta0 = zeta1 = 1.0;
-                eta0 = eta1 = 0.0;
-            }
-            case 1 -> {
-                zeta0 = zeta1 = 1.0;
-                eta0 = 0.0;
-                eta1 = 1.0;
-            }
-            case 2 -> {
-                zeta0 = zeta1 = 1.0;
-                eta0 = eta1= 0.0;
-                phi0 = 0.5*Math.pow(Math.E,-1/E);
-                phi1 = 0;
-            }
-        }
+       /* switch (problem) {
+            case 0 -> ;
+            case 1 -> ;
+            case 2 -> ;
+        }*/
         // Initialize arrays and variables
         h = 1.0/(N-1);
         tau = Tmax/M;
@@ -292,7 +278,7 @@ public class Main extends JFrame{
         interpolateFunctionSeries.setLineWidth(1.2f);
         // Main frame
         Main frame = new Main();
-        frame.setTitle("Advection-Diffusion");
+        frame.setTitle("Heat equation");
         frame.add(new XChartPanel<>(chart));
         frame.setSize(frame.getWidth(), frame.getHeight());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
