@@ -23,22 +23,23 @@ import java.util.Objects;
  * */
 
 public class Main extends JFrame{
+    private static Main frame;
+    private static ComputationThread thread;
     // Double
     private static double[] x, array_a, array_b, array_c, array_f, array_r, array_gamma, array_sol, array_sol_origin;
     // Variables
     private static double error, h, t, tau, curant, Tmax, a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
     // Integer
-    private static int N = 8, M, T, k, problem = 0, method = 0;
+    private static int N = 8, M, T, k, problem = 0, scheme = 0;
     // X and Y coordinate lists
     private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
     // GUI (Java Swing)
     private static XYChart chart;
     private static XYSeries testFunctionSeries, interpolateFunctionSeries;
-    private final JComboBox<Integer> nodesChoice;
-    private final JComboBox<String> problemsChoice,methodChoice;
-    private final JComboBox<Double> epsilonChoice;
-    private final JTextField epsilonInput,kInput;
-    private JButton display = new JButton("Display");
+    private final JComboBox<Integer> nodesChoice, timeNodesChoice, tMaxChoice, kChoice;
+    private final JComboBox<String> problemsChoice,schemeChoice;
+    private final JTextField epsilonInput, curantInput, timeInput;
+    private JButton computeButton = new JButton("Compute");
     // Series names
     private static final String seriesName1 = "Numerical solution";
     private static final String seriesName2 = "Analytical solution";
@@ -49,62 +50,70 @@ public class Main extends JFrame{
         add(mainPanel, BorderLayout.CENTER);
         // Parameter, methods selection
         Integer[] choicesNodes = {9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193};
-        // Integer[] choices = {9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193};
-        Double[] choicesCurant = {0.1,0.5,0.8,1.0,5.0,10.0,20.0,50.0};
-        String[] choicesProblem = {"Трансформация «k»-й гармоники ряда Фурье"};
-        String[] choicesMethod = {"Явная схема (1)", "Схема Кранка-Николсона (2)", "Схема, сохраняющая монотонность (5)"};
-        Double[] choicesEpsilon = { 0.5,0.3,0.1,0.08,0.0625,0.015 };
+        Integer[] choicesTimeNodes= {5,9,17,33,65,129,257,513};
+        Integer[] choicesTmax = {1,2,3,4,5,6,7};
+        Integer[] choicesK = {1,2,3,4,5};
+        String[] choicesProblem = {"Тестовые задача 1."};
+        String[] choicesScheme = {"Явная схема (1)", "Схема Кранка-Николсона (2)", "Схема, сохраняющая монотонность (5)"};
         JLabel nodesLabel = new JLabel("Nodes");
         nodesChoice = new JComboBox<>(choicesNodes);                    // Node selection
+        JLabel timeNodesLabel = new JLabel("Time nodes");
+        timeNodesChoice = new JComboBox<>(choicesTimeNodes);            // Time node selection
+        JLabel tMaxLabel = new JLabel("Tmax");
+        tMaxChoice = new JComboBox<>(choicesTmax);                      // Tmax selection
+        JLabel kLabel = new JLabel("K");
+        kChoice = new JComboBox<>(choicesK);
         JLabel problemLabel = new JLabel("Problem");
         problemsChoice = new JComboBox<>(choicesProblem);               // Problems selection
-        methodChoice = new JComboBox<>(choicesMethod);                  // Method selection
-        JLabel methodLabel = new JLabel("Method");
-        epsilonChoice = new JComboBox<>(choicesEpsilon);                // Epsilon selection
-        JLabel epsilonLabel = new JLabel("Epsilon");
+        JLabel schemeLabel = new JLabel("Scheme");
+        schemeChoice = new JComboBox<>(choicesScheme);                  // Method selection
+        JLabel epsilonLabel = new JLabel("Epsilon");                // Enter epsilon
         epsilonInput = new JTextField("0.0135");
-        epsilonInput.setToolTipText("Epsilon");
-        JLabel kLabel = new JLabel("k");
-        kInput = new JTextField("1");
-        kInput.setToolTipText("k");
-        //phi1Input = new JTextField("1");
-        //JLabel phi1Label = new JLabel("φ1");
-        //phi1Input.setToolTipText("Phi 1");
+        JLabel curantLabel = new JLabel("Curant");
+        curantInput = new JTextField();
+        JLabel timeLabel = new JLabel("Time");
+        timeInput = new JTextField();
         // Control panel
         JPanel controlPanel = new JPanel();
-        controlPanel.setLayout(new GridLayout(40, 1));
+        controlPanel.setLayout(new GridLayout(35, 1));
         controlPanel.setBackground(Color.lightGray);
-        controlPanel.add(nodesLabel);
-        controlPanel.add(nodesChoice);
+        controlPanel.add(schemeLabel);
+        controlPanel.add(schemeChoice);
         controlPanel.add(problemLabel);
         controlPanel.add(problemsChoice);
-        controlPanel.add(methodLabel);
-        controlPanel.add(methodChoice);
+        controlPanel.add(kLabel);
+        controlPanel.add(kChoice);
         controlPanel.add(epsilonLabel);
         controlPanel.add(epsilonInput);
-        controlPanel.add(kLabel);
-        controlPanel.add(kInput);
-        controlPanel.add(display);
+        controlPanel.add(nodesLabel);
+        controlPanel.add(nodesChoice);
+        controlPanel.add(timeNodesLabel);
+        controlPanel.add(timeNodesChoice);
+        controlPanel.add(tMaxLabel);
+        controlPanel.add(tMaxChoice);
+        controlPanel.add(curantLabel);
+        controlPanel.add(curantInput);
+        controlPanel.add(timeLabel);
+        controlPanel.add(timeInput);
+        controlPanel.add(computeButton);
         add(controlPanel, BorderLayout.EAST);
 
         ActionListener actionListener = e -> {
-            try {
-                problem = problemsChoice.getSelectedIndex();
-                method = methodChoice.getSelectedIndex();
-                E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
-                k = Integer.parseInt(Objects.requireNonNull(kInput.getText()));
-                N = Integer.parseInt(Objects.requireNonNull(nodesChoice.getSelectedItem()).toString());
-                ApplyNumericalMethod();
-                Draw(this);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            scheme = schemeChoice.getSelectedIndex();
+            problem = problemsChoice.getSelectedIndex();
+            k = kChoice.getItemAt(kChoice.getSelectedIndex());
+            E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
+            N = nodesChoice.getItemAt(nodesChoice.getSelectedIndex());
+            M = timeNodesChoice.getItemAt(timeNodesChoice.getSelectedIndex());
+            Tmax = tMaxChoice.getItemAt(tMaxChoice.getSelectedIndex());
+            startThread();
         };
         problemsChoice.addActionListener(actionListener);
-        methodChoice.addActionListener(actionListener);
+        schemeChoice.addActionListener(actionListener);
         nodesChoice.addActionListener(actionListener);
+        kChoice.addActionListener(actionListener);
         epsilonInput.addActionListener(actionListener);
-        display.addActionListener(actionListener);
+        computeButton.addActionListener(actionListener);
     }
     //------------------------------------------------------------------------------------------------------------------------------
 
@@ -124,8 +133,8 @@ public class Main extends JFrame{
         yData1.add(y);
     }
     // Chart solutions
-    private static void Draw(JFrame jFrame) throws InterruptedException {
-        // First clear up array lists
+    private void Draw() throws InterruptedException {
+        // Clear array lists
         xData1.clear();
         yData1.clear();
         xData2.clear();
@@ -140,10 +149,10 @@ public class Main extends JFrame{
             // yData2.add(SolutionFunction(x));
         }
         // Update graphs
-        chart.updateXYSeries(seriesName1, xData1, yData1, null);
-        chart.updateXYSeries(seriesName2, xData2, yData2, null);
+       // chart.updateXYSeries(seriesName1, xData1, yData1, null);
+        //chart.updateXYSeries(seriesName2, xData2, yData2, null);
         chart.setTitle("Error: "+error);
-        jFrame.repaint();
+        repaint();
     }
     //------------------------------------------------------------------------------------------------------------------------------
 
@@ -196,12 +205,6 @@ public class Main extends JFrame{
     }
     // Numerical method
     private static void ApplyNumericalMethod() {
-        // Initial & boundary values
-       /* switch (problem) {
-            case 0 -> ;
-            case 1 -> ;
-            case 2 -> ;
-        }*/
         // Initialize arrays and variables
         h = 1.0/(N-1);
         tau = Tmax/M;
@@ -229,7 +232,7 @@ public class Main extends JFrame{
             //array_r[i] = (CoefficientA(x)*h)/(2*E);
         }
         // Select method
-        switch (method) {
+        switch (scheme) {
             case 0 -> theta = 0;
             case 1 -> theta = 0.5;
             case 2 -> theta = Math.max(0.5, 1-3.0/(4*k));
@@ -259,6 +262,16 @@ public class Main extends JFrame{
     //------------------------------------------------------------------------------------------------------------------------------
 
     //----------------------------------------------------------MAIN----------------------------------------------------------------
+    public static Color color(double val) {
+        double H = val * 0.3;
+        double S = 0.9;
+        double B = 0.9;
+        int rgb = Color.HSBtoRGB((float)H, (float)S, (float)B);
+        int red = (rgb >> 16) & 0xFF;
+        int green = (rgb >> 8) & 0xFF;
+        int blue = rgb & 0xFF;
+        return new Color(red, green, blue, 0x33);
+    }
     public static void main(String[] args) throws InterruptedException {
         Setup();
         chart = new XYChartBuilder().width(1750).height(900).xAxisTitle("X").yAxisTitle("Y").build();
@@ -270,45 +283,36 @@ public class Main extends JFrame{
         chart.getStyler().setCursorEnabled(true);
         chart.getStyler().setPlotBorderVisible(true);
         chart.getStyler().setPlotMargin(10);
-        chart.getStyler().setMarkerSize(0);
+        chart.getStyler().setMarkerSize(5);
         // Series 1
         testFunctionSeries = chart.addSeries(seriesName1, xData1, yData1);
         testFunctionSeries.setLineColor(Color.blue);
+        testFunctionSeries.setMarkerColor(color(1.0));
         testFunctionSeries.setLineWidth(1.2f);
         // Series 2
         interpolateFunctionSeries = chart.addSeries(seriesName2, xData2, yData2);
-        interpolateFunctionSeries.setLineColor(Color.RED);
+        interpolateFunctionSeries.setLineColor(Color.red);
+        interpolateFunctionSeries.setMarkerColor(Color.red);
         interpolateFunctionSeries.setLineWidth(1.2f);
         // Main frame
-        Main frame = new Main();
+        frame = new Main();
         frame.setTitle("Heat equation");
         frame.add(new XChartPanel<>(chart));
         frame.setSize(frame.getWidth(), frame.getHeight());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
-
-        // Testing
-        double phase = 0;
-        t = 0;
-        tau = 2;
-        Tmax = 213;
-        double[][] initdata = getSineData(phase);
-        int timer = 20;
-        while (true) {
-            phase += 2 * Math.PI * 2 / 20.0;
-            Thread.sleep(150);
-            final double[][] data = getSineData(phase);
-            javax.swing.SwingUtilities.invokeLater(() -> {
-                chart.updateXYSeries(seriesName1, data[0], data[1], null);
-                frame.repaint();
-            });
-            t += tau;
-            if(t > Tmax) {
-                t = 0;
-                break;
-            }
+    }
+    private void startThread() {
+        if(thread == null || thread.isInterrupted())
+        {
+            thread = new ComputationThread();
+        } else if(thread.isAlive())
+        {
+            thread.interrupt();
+            thread = new ComputationThread();
         }
+        thread.start();
     }
     private static double[][] getSineData(double phase) {
         double[] xData = new double[100];
@@ -319,6 +323,41 @@ public class Main extends JFrame{
             yData[i] = Math.sin(radians);
         }
         return new double[][] { xData, yData };
+    }
+
+    private class ComputationThread extends Thread {
+        public ComputationThread() {
+           // new Thread(this).start();
+        }
+        @Override
+        public void run() {
+            /* Thread.sleep(150);
+                ApplyNumericalMethod();
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    try {
+                        Draw();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                });*/
+            try {
+                double phase = 0;
+                t = 0;
+                tau = 2;
+                Tmax = 100;
+                while (t <= Tmax) {
+                    phase += 2 * Math.PI * 2 / 20.0;
+                    Thread.sleep(100);
+                    double[][] data = getSineData(phase);
+                    chart.updateXYSeries(seriesName1, data[0], data[1], null);
+                    frame.repaint();
+                    t += tau;
+                }
+                interrupt();
+            } catch(Exception e) {
+                System.out.println("Exception is caught: " + e);
+            }
+        }
     }
 }
 //------------------------------------------------------------------------------------------------------------------------------
