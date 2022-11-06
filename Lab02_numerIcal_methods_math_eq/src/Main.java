@@ -25,24 +25,19 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    // Double
     private static double[] x, array_a, array_b, array_c, array_f, array_r, array_gamma, array_sol, array_sol_origin;
-    // Variables
     private static double error, h, t, tau, curant, Tmax, a, b, theta, eta0, eta1, zeta0, zeta1, phi0, phi1, E;
-    // Integer
     private static int N = 8, M, T, k, problem = 0, scheme = 0;
-    // X and Y coordinate lists
     private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
-    // GUI (Java Swing)
+    private static final String seriesName1 = "Numerical solution";
+    private static final String seriesName2 = "Analytical solution";
+    //------------------------------------------------------JFRAME------------------------------------------------------------------
     private static XYChart chart;
     private static XYSeries testFunctionSeries, interpolateFunctionSeries;
     private final JComboBox<Integer> nodesChoice, timeNodesChoice, tMaxChoice, kChoice;
     private final JComboBox<String> problemsChoice,schemeChoice;
     private final JTextField epsilonInput, curantInput, timeInput;
     private JButton computeButton = new JButton("Compute");
-    // Series names
-    private static final String seriesName1 = "Numerical solution";
-    private static final String seriesName2 = "Analytical solution";
     //------------------------------------------------------JFRAME------------------------------------------------------------------
     public Main() {
         setLayout(new BorderLayout());
@@ -111,6 +106,8 @@ public class Main extends JFrame{
         problemsChoice.addActionListener(actionListener);
         schemeChoice.addActionListener(actionListener);
         nodesChoice.addActionListener(actionListener);
+        timeNodesChoice.addActionListener(actionListener);
+        tMaxChoice.addActionListener(actionListener);
         kChoice.addActionListener(actionListener);
         epsilonInput.addActionListener(actionListener);
         computeButton.addActionListener(actionListener);
@@ -331,15 +328,6 @@ public class Main extends JFrame{
         }
         @Override
         public void run() {
-            /* Thread.sleep(150);
-                ApplyNumericalMethod();
-                javax.swing.SwingUtilities.invokeLater(() -> {
-                    try {
-                        Draw();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                });*/
             try {
                 double phase = 0;
                 t = 0;
@@ -347,11 +335,14 @@ public class Main extends JFrame{
                 Tmax = 100;
                 while (t <= Tmax) {
                     phase += 2 * Math.PI * 2 / 20.0;
-                    Thread.sleep(100);
+                    sleep(130);
                     double[][] data = getSineData(phase);
                     chart.updateXYSeries(seriesName1, data[0], data[1], null);
                     frame.repaint();
                     t += tau;
+
+                  /*  ApplyNumericalMethod();
+                    Draw();*/
                 }
                 interrupt();
             } catch(Exception e) {
