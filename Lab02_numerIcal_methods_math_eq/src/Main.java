@@ -23,9 +23,9 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    private static double[] x, array_u, array_b, array_c, array_f, array_r, array_gamma, array_sol, array_sol_origin;
+    private static double[] x, array_u, array_v, array_b, array_c, array_f, array_sol, array_sol_origin;
     private static double error, h, t, tau, curant, Tmax, a, b, theta,
-    eta0, eta1, zeta0, zeta1, phi0, phi1, E, A, B, C, A0, B0, C0;
+            eta0, eta1, zeta0, zeta1, phi0, phi1, E, A, B, C, A0, B0, C0;
     private static int N = 8, M, T, k, problem = 0, scheme = 0;
     private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
     private static final String seriesName1 = "Numerical solution";
@@ -127,50 +127,46 @@ public class Main extends JFrame{
         xData2.add(0d);
         yData2.add(0d);
     }
-    public static void addCoord(double x, double y) {
-        xData1.add(x);
-        yData1.add(y);
-    }
-    // Chart solutions
+    // Graph solutions
     private void Graph() {
         // Clear array lists
         xData1.clear();
         yData1.clear();
         xData2.clear();
         yData2.clear();
-        // Coordinates of numerical solution
+        // Numerical solution coordinates
         for (int i = 1; i <= N; i++) {
-            // addCoord(x[i], array_sol[i]);
-            //xData1.add(0.0);
-            //yData1.add(0.0);
+            xData1.add(x[i]);
+            yData1.add(array_v[i]);
         }
-        // Draw analytical solution
+        // Analytical solution coordinates
         for(int i = 1; i <= 100; i++) {
             double xe = (i - 1.0) / (100 - 1.0);
             xData2.add(xe);
-            yData2.add(SolutionFunction(xe, t));
+            yData2.add(U(xe, t));
         }
         // Update graphs
-        //chart.updateXYSeries(seriesName1, xData1, yData1, null);
+        chart.updateXYSeries(seriesName1, xData1, yData1, null);
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
-        chart.setTitle("Error: "+error);
+        // chart.setTitle("Error: "+error);
         repaint();
     }
     //------------------------------------------------------------------------------------------------------------------------------
 
     //-------------------------------------------------------NUMERICAL-METHODS------------------------------------------------------
     // Double sweep algorithm
-    private static double[] DoubleSweepAlgorithm(int n, double[] A, double[] B, double[] C, double[] f) {
+    private static double[] ConstantDoubleSweep(int n, double A, double B, double C, double[] F) {
         double[] U = new double[n+1];
         double[] alpha = new double[n+1];
         double[] beta = new double[n+1];
-        alpha[1] = C[1]/B[1];
-        beta[1] = f[1]/B[1];
-        for (int i = 2; i <= n-1; i++) {
-            alpha[i] = C[i]/(B[i] - alpha[i-1]*A[i]);
-            beta[i] = (f[i] + beta[i-1]*A[i])/(B[i] - alpha[i-1]*A[i]);
+        alpha[1] = C/B;
+        beta[1] = F[1]/B;
+        for (int i = 2; i <= n; i++) {
+            double v = B - alpha[i - 1] * A;
+            alpha[i] = C / v;
+            beta[i] = (F[i] + beta[i-1]*A) / v;
         }
-        U[n] = (f[n] + beta[n-1]*A[n])/(B[n] - alpha[n-1]*A[n]);
+        U[n] = (F[n] + beta[n-1]*A)/(B - alpha[n-1]*A);
         for (int i = n-1; i >= 1; i--) {
             U[i] = alpha[i]*U[i+1] + beta[i];
         }
@@ -181,7 +177,7 @@ public class Main extends JFrame{
         return 0.0;
     }
     // Analytical solution
-    private static double SolutionFunction(double x, double t) {
+    private static double U(double x, double t) {
         return Math.sin(Math.PI*k*x)*Math.pow(Math.E,-(Math.PI*Math.PI*k*k)*E*t)+x*Psi1(t)+(1-x)*Psi0(t);
     }
     // Phi(x)
@@ -219,45 +215,37 @@ public class Main extends JFrame{
         curant = (E*tau)/(h*h);
         curantInput.setText(Double.toString(curant));
         timeInput.setText(Double.toString(t));
-
-        A = C = theta*curant;
+        // Constants
+        A = theta*curant;
+        C = theta*curant;
         B = 1 + A + C;
-        A0 = C0 = (1-theta)*curant;
+        A0 = (1-theta)*curant;
+        C0 = (1-theta)*curant;
         B0 = 1 - A0 - C0;
-
+        // Arrays
         x = new double[N+1];
+        array_f = new double[N+1];
         array_u = new double[N+1];
         array_sol_origin = new double[N+1];
         // Grid
-      /*  for (int i = 1; i <= N; i++) {
+        for (int i = 1; i <= N; i++) {
             x[i] = (i-1.0)/(N-1);
         }
-
-        // Analytical solution in the grid
-        for (int i = 1; i <= N; i++) {
-            array_sol_origin[i] = SolutionFunction(x[i], t);
-        }*/
-        // Compute A, B, C, F arrays
-        for (int i = 1; i <= N; i++) {
-            //array_a[i] = E/(h*h)*(array_gamma[i]-array_r[i]);
-            //array_b[i] = (2*E*array_gamma[i])/(h*h)+CoefficientB(x);
-            //array_c[i] = E/(h*h)*(array_gamma[i]+array_r[i]);
-           // array_f[i] = -Function(x);
+        if(t==0) {
+            for (int i = 1; i <=N; i++) {
+                array_u[i] = Phi(x[i], t);
+            }
+            array_v = Arrays.copyOf(array_u, N+1);
+        } else {
+            for (int i = 2; i < N; i++) {
+                array_f[i]=A0*U(x[i-1],t)+B0*U(x[i],t)+C0*U(x[i+1],t);
+            }
+            array_v = ConstantDoubleSweep(N, A, B, C, array_f);
+            array_v[1] = Psi0(t);
+            array_v[N] = Psi1(t);
         }
-
-        // Initialize boundary/corner values
-      /*  array_a[1] = 0;
-        array_b[1] = zeta0+eta0*(E/h);
-        array_c[1] = eta0*(E/h);
-        array_f[1] = phi0;
-        array_a[N] = eta1*(E/h);
-        array_b[N] = zeta1+eta1*(E/h);
-        array_c[N] = 0;
-        array_f[N] = phi1;*/
-        // Call double-sweep algorithm
-        //array_sol = DoubleSweepAlgorithm(N, array_a, array_b, array_c, array_f);
         // Calculate error
-      // error = Error(array_sol_origin, array_sol);
+        // error = Error(array_sol_origin, array_sol);
     }
     //------------------------------------------------------------------------------------------------------------------------------
 
@@ -283,7 +271,7 @@ public class Main extends JFrame{
         chart.getStyler().setCursorEnabled(true);
         chart.getStyler().setPlotBorderVisible(true);
         chart.getStyler().setPlotMargin(10);
-        chart.getStyler().setMarkerSize(0);
+        chart.getStyler().setMarkerSize(4);
         // Series 1
         testFunctionSeries = chart.addSeries(seriesName1, xData1, yData1);
         testFunctionSeries.setLineColor(Color.blue);
