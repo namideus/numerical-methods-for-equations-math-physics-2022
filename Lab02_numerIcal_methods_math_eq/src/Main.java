@@ -24,9 +24,9 @@ public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
     private static double[] x, array_u, array_v, array_b, array_c, array_f, array_sol, array_sol_origin;
-    private static double error, h, t, tau, curant, Tmax, a, b, theta,
+    private static double error, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, A, B, C, A0, B0, C0;
-    private static int N = 8, M, T, k, problem = 0, scheme = 0;
+    private static int N = 8, M, m = 1, T, k, problem = 0, scheme = 0;
     private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
     private static final String seriesName1 = "Numerical solution";
     private static final String seriesName2 = "Analytical solution";
@@ -186,11 +186,11 @@ public class Main extends JFrame{
     }
     // Psi0(t)
     private static double Psi0(double t) {
-        return 0;
+        return 0.0;
     }
     // Psi1(t)
     private static double Psi1(double t) {
-        return 1;
+        return 1.0;
     }
     // Error
     public static double Error(double[] a1, double[] a2) {
@@ -231,18 +231,21 @@ public class Main extends JFrame{
         for (int i = 1; i <= N; i++) {
             x[i] = (i-1.0)/(N-1);
         }
-        if(t==0) {
+        // (V.2.8)-(V.2.10)
+        if(t==0.0) {
             for (int i = 1; i <=N; i++) {
                 array_u[i] = Phi(x[i], t);
             }
             array_v = Arrays.copyOf(array_u, N+1);
         } else {
+            array_u[1] = Psi0(t);
+            array_u[N] = Psi1(t);
+
             for (int i = 2; i < N; i++) {
-                array_f[i]=A0*U(x[i-1],t)+B0*U(x[i],t)+C0*U(x[i+1],t);
+                array_u[i]=A0*array_v[i-1]+B0*array_v[i]+C0*array_v[i+1];
             }
-            array_v = ConstantDoubleSweep(N, A, B, C, array_f);
-            array_v[1] = Psi0(t);
-            array_v[N] = Psi1(t);
+
+            array_v = ConstantDoubleSweep(N, A, B, C, array_u);
         }
         // Calculate error
         // error = Error(array_sol_origin, array_sol);
@@ -308,11 +311,13 @@ public class Main extends JFrame{
         public void run() {
             try {
                 t = 0;
+                m = 0;
                 while (t <= Tmax) {
                     sleep(170);
                     ApplyNumericalMethod();
                     Graph();
                     t += tau;
+                    m++;
                 }
                 interrupt();
             } catch(Exception e) {
