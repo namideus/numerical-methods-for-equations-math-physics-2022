@@ -24,7 +24,7 @@ public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
     private static double[] x, array_u, array_v, array_b, array_c, array_f, array_sol, array_sol_origin;
-    private static double error, h, t=0, tau, curant, Tmax, a, b, theta,
+    private static double error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, A, B, C, A0, B0, C0;
     private static int N = 8, M, m = 1, T, k, problem = 0, scheme = 0;
     private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
@@ -148,7 +148,7 @@ public class Main extends JFrame{
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
-        // chart.setTitle("Error: "+error);
+        chart.setTitle("Error: "+error);
         repaint();
     }
     //------------------------------------------------------------------------------------------------------------------------------
@@ -240,15 +240,16 @@ public class Main extends JFrame{
         } else {
             array_u[1] = Psi0(t);
             array_u[N] = Psi1(t);
-
             for (int i = 2; i < N; i++) {
                 array_u[i]=A0*array_v[i-1]+B0*array_v[i]+C0*array_v[i+1];
             }
-
             array_v = ConstantDoubleSweep(N, A, B, C, array_u);
         }
         // Calculate error
-        // error = Error(array_sol_origin, array_sol);
+        for (int i = 1; i <= N; i++) {
+            array_sol_origin[i] = U(x[i], t);
+        }
+        error = Math.max(Error(array_sol_origin, array_v), error);
     }
     //------------------------------------------------------------------------------------------------------------------------------
 
@@ -268,7 +269,7 @@ public class Main extends JFrame{
         chart = new XYChartBuilder().width(1750).height(900).xAxisTitle("X").yAxisTitle("Y").build();
         chart.getStyler().setChartBackgroundColor(Color.lightGray);
         chart.getStyler().setCursorBackgroundColor(Color.lightGray);
-        chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideS);
+        chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
         chart.getStyler().setZoomEnabled(true);
         chart.getStyler().setZoomResetByButton(true);
         chart.getStyler().setCursorEnabled(true);
@@ -312,6 +313,7 @@ public class Main extends JFrame{
             try {
                 t = 0;
                 m = 0;
+                error = 0;
                 while (t <= Tmax) {
                     sleep(170);
                     ApplyNumericalMethod();
@@ -327,35 +329,3 @@ public class Main extends JFrame{
     }
 }
 //------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-// Used for testing onlu
-
-   /*   double phase = 0;
-                t = 0;
-                tau = 2;
-                Tmax = 100;
-                while (t <= Tmax) {
-                    phase += 2 * Math.PI * 2 / 20.0;
-                    sleep(130);
-                    double[][] data = getSineData(phase);
-                    chart.updateXYSeries(seriesName1, data[0], data[1], null);
-                    frame.repaint();
-                    t += tau;
-                }
-                interrupt();*/
-
-
-/*  private static double[][] getSineData(double phase) {
-        double[] xData = new double[100];
-        double[] yData = new double[100];
-        for (int i = 0; i < xData.length; i++) {
-            double radians = phase + (2 * Math.PI / xData.length * i);
-            xData[i] = radians;
-            yData[i] = Math.sin(radians);
-        }
-        return new double[][] { xData, yData };
-    }*/
