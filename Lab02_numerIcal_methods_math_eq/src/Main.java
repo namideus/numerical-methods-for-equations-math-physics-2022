@@ -23,7 +23,7 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    private static double[] x, array_u, array_v, array_b, array_c, array_f, array_sol, array_sol_origin;
+    private static double[] x, array_u, array_v, array_res, array_c, array_f, array_sol, array_sol_origin;
     private static double error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, A, B, C, A0, B0, C0;
     private static int N = 8, M, m = 1, T, k, problem = 0, scheme = 0;
@@ -216,13 +216,14 @@ public class Main extends JFrame{
         // Constants
         A = theta*curant;
         C = theta*curant;
-        B = 1 + A + C;
+        B = A + C + 1;
         A0 = (1-theta)*curant;
         C0 = (1-theta)*curant;
         B0 = 1 - A0 - C0;
         // Arrays
         x = new double[N+1];
         array_f = new double[N+1];
+        array_res = new double[N+1];
         array_u = new double[N+1];
         array_sol_origin = new double[N+1];
         // Grid
@@ -232,16 +233,16 @@ public class Main extends JFrame{
         // (V.2.8)-(V.2.10)
         if(t==0.0) {
             for (int i = 1; i <=N; i++) {
-                array_u[i] = Phi(x[i], t);
+                array_f[i] = Phi(x[i], t);
             }
-            array_v = Arrays.copyOf(array_u, N+1);
+            array_v = Arrays.copyOf(array_f, N+1);
         } else {
-            array_u[1] = Psi0(t);
-            array_u[N] = Psi1(t);
+            array_f[1] = Psi0(t);
+            array_f[N] = Psi1(t);
             for (int i = 2; i < N; i++) {
-                array_u[i]=A0*array_v[i-1]+B0*array_v[i]+C0*array_v[i+1];
+                array_f[i]=A0*array_v[i-1]+B0*array_v[i]+C0*array_v[i+1];
             }
-            array_v = ConstantDoubleSweep(N, A, B, C, array_u);
+            array_v = ConstantDoubleSweep(N, A, B, C, array_f);
         }
         // Calculate error
         for (int i = 1; i <= N; i++) {
