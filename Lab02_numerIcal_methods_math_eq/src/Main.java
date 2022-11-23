@@ -171,22 +171,6 @@ public class Main extends JFrame{
         }
         return U;
     }
-    private static double[] DoubleSweep(int n, double A[], double B[], double C[], double[] F) {
-        double[] U = new double[n+1];
-        double[] alpha = new double[n+1];
-        double[] beta = new double[n+1];
-        alpha[1] = C[1]/B[1];
-        beta[1] = F[1]/B[1];
-        for (int i = 2; i <= n-1; i++) {
-            alpha[i] = C[i]/(B[i] - alpha[i-1]*A[i]);
-            beta[i] = (F[i] + beta[i-1]*A[i])/(B[i] - alpha[i-1]*A[i]);
-        }
-        U[n] = (F[n] + beta[n-1]*A[n])/(B[n] - alpha[n-1]*A[n]);
-        for (int i = n-1; i >= 1; i--) {
-            U[i] = alpha[i]*U[i+1] + beta[i];
-        }
-        return U;
-    }
     // Function
     private static double Function(double x, double t) {
         return 0.0;
@@ -201,11 +185,11 @@ public class Main extends JFrame{
     }
     // Psi0(t)
     private static double Psi0(double t) {
-        return 0.0;
+        return 0.1;
     }
     // Psi1(t)
     private static double Psi1(double t) {
-        return 1.0;
+        return 0.1;
     }
     // Error
     public static double Error(double[] a1, double[] a2) {
@@ -248,9 +232,6 @@ public class Main extends JFrame{
         // Grid
         for (int i = 1; i <= N; i++) {
             x[i] = (i-1.0)/(N-1);
-            array_a[i] = A;
-            array_b[i] = B;
-            array_c[i] = C;
         }
         // (V.2.8)-(V.2.10)
         if(t==0.0) {
@@ -265,7 +246,6 @@ public class Main extends JFrame{
                 array_f[i]=A0*array_v[i-1]+B0*array_v[i]+C0*array_v[i+1];
             }
             array_v = ConstantDoubleSweep(N, A, B, C, array_f);
-            // array_v = DoubleSweep(N, array_a, array_b, array_c, array_f);
         }
         // Calculate error
         for (int i = 1; i <= N; i++) {
