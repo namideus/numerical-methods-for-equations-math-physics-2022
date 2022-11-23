@@ -6,6 +6,7 @@ import org.knowm.xchart.style.Styler;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
@@ -72,8 +73,7 @@ public class Main extends JFrame{
         controlPanel.add(phi1Input);
         controlPanel.add(display);
         add(controlPanel, BorderLayout.EAST);
-        // Listen to display button click, update the graph
-        display.addActionListener(actionEvent -> {
+        ActionListener actionListener = e -> {
             E = Double.parseDouble(Objects.requireNonNull(epsilonInput.getText()));
             phi0 = Double.parseDouble(Objects.requireNonNull(phi0Input.getText()));
             phi1 = Double.parseDouble(Objects.requireNonNull(phi1Input.getText()));
@@ -83,7 +83,15 @@ public class Main extends JFrame{
             ApplyNumericalMethod();
             Draw();
             repaint();
-        });
+        };
+        nodesChoice.addActionListener(actionListener);
+        problemsChoice.addActionListener(actionListener);
+        methodChoice.addActionListener(actionListener);
+        epsilonInput.addActionListener(actionListener);
+        phi0Input.addActionListener(actionListener);
+        phi1Input.addActionListener(actionListener);
+        epsilonInput.addActionListener(actionListener);
+        display.addActionListener(actionListener);
     }
     // Algorithm of "progonka"
     private static double[] ProgonkaAlgorithm(int n, double[] A, double[] B, double[] C, double[] f) {
