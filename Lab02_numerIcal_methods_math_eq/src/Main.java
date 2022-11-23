@@ -23,9 +23,10 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    private static double[] x, array_u, array_v, array_res, array_c, array_f, array_sol, array_sol_origin;
+    private static double[] x, array_u, array_v, array_a, array_b, array_c, array_f, array_sol_origin;
     private static double error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, A, B, C, A0, B0, C0;
+    private static boolean firstCycle = true, lastCycle = true;
     private static int N = 8, M, m = 1, T, k, problem = 0, scheme = 0;
     private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
     private static final String seriesName1 = "Numerical solution";
@@ -159,12 +160,28 @@ public class Main extends JFrame{
         double[] beta = new double[n+1];
         alpha[1] = C/B;
         beta[1] = F[1]/B;
-        for (int i = 2; i <= n; i++) {
+        for (int i = 2; i < n; i++) {
             double v = B - alpha[i - 1] * A;
             alpha[i] = C / v;
             beta[i] = (F[i] + beta[i-1]*A) / v;
         }
         U[n] = (F[n] + beta[n-1]*A)/(B - alpha[n-1]*A);
+        for (int i = n-1; i >= 1; i--) {
+            U[i] = alpha[i]*U[i+1] + beta[i];
+        }
+        return U;
+    }
+    private static double[] DoubleSweep(int n, double A[], double B[], double C[], double[] F) {
+        double[] U = new double[n+1];
+        double[] alpha = new double[n+1];
+        double[] beta = new double[n+1];
+        alpha[1] = C[1]/B[1];
+        beta[1] = F[1]/B[1];
+        for (int i = 2; i <= n-1; i++) {
+            alpha[i] = C[i]/(B[i] - alpha[i-1]*A[i]);
+            beta[i] = (F[i] + beta[i-1]*A[i])/(B[i] - alpha[i-1]*A[i]);
+        }
+        U[n] = (F[n] + beta[n-1]*A[n])/(B[n] - alpha[n-1]*A[n]);
         for (int i = n-1; i >= 1; i--) {
             U[i] = alpha[i]*U[i+1] + beta[i];
         }
@@ -223,17 +240,22 @@ public class Main extends JFrame{
         // Arrays
         x = new double[N+1];
         array_f = new double[N+1];
-        array_res = new double[N+1];
+        array_a = new double[N+1];
+        array_b = new double[N+1];
+        array_c = new double[N+1];
         array_u = new double[N+1];
         array_sol_origin = new double[N+1];
         // Grid
         for (int i = 1; i <= N; i++) {
             x[i] = (i-1.0)/(N-1);
+            array_a[i] = A;
+            array_b[i] = B;
+            array_c[i] = C;
         }
         // (V.2.8)-(V.2.10)
         if(t==0.0) {
             for (int i = 1; i <=N; i++) {
-                array_f[i] = Phi(x[i], t);
+                array_f[i] = Phi(x[i], 0);
             }
             array_v = Arrays.copyOf(array_f, N+1);
         } else {
@@ -243,6 +265,7 @@ public class Main extends JFrame{
                 array_f[i]=A0*array_v[i-1]+B0*array_v[i]+C0*array_v[i+1];
             }
             array_v = ConstantDoubleSweep(N, A, B, C, array_f);
+            // array_v = DoubleSweep(N, array_a, array_b, array_c, array_f);
         }
         // Calculate error
         for (int i = 1; i <= N; i++) {
