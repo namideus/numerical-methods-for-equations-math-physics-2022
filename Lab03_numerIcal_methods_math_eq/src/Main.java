@@ -27,7 +27,7 @@ public class Main extends JFrame{
     private static double l,m,error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, sigma, A, B, C, A0, B0, C0;
     private static boolean firstCycle = true, lastCycle = true;
-    private static int N = 8, M, T, k, problem = 0, scheme = 0;
+    private static int N = 8, M, T, k, problem = 0, method = 0;
     private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
     private static final String seriesName1 = "Numerical solution";
     private static final String seriesName2 = "Analytical solution";
@@ -35,8 +35,8 @@ public class Main extends JFrame{
     private static XYChart chart;
     private static XYSeries testFunctionSeries, interpolateFunctionSeries;
     private final JComboBox<Integer> nodesChoice, timeNodesChoice, tMaxChoice, kChoice;
-    private final JComboBox<String> problemsChoice,schemeChoice;
-    private final JTextField sigmaInput, curantInput, timeInput;
+    private final JComboBox<String> problemsChoice, iterationChoice;
+    private final JTextField sigmaInput, iterationsInput, timeInput, errorInput;
     private JButton computeButton = new JButton("Compute");
     private JButton exitButton = new JButton("Exit");
     //------------------------------------------------------JFRAME------------------------------------------------------------------
@@ -50,7 +50,7 @@ public class Main extends JFrame{
         Integer[] choicesTmax = {1,2,3,4,5,6,7};
         Integer[] choicesK = {1,2,3,4,5};
         String[] choicesProblem = {"Problem No: 1 (l=2, m=1)"};
-        String[] choicesScheme = {"Jacob", "Seidel"};
+        String[] choicesIterationMethod = {"Jacob", "Seidel"};
         JLabel nodesLabel = new JLabel("Nodes");
         nodesChoice = new JComboBox<>(choicesNodes);                    // Node selection
         JLabel timeNodesLabel = new JLabel("Time nodes");
@@ -61,50 +61,48 @@ public class Main extends JFrame{
         kChoice = new JComboBox<>(choicesK);
         JLabel problemLabel = new JLabel("Problem");
         problemsChoice = new JComboBox<>(choicesProblem);               // Problems selection
-        JLabel schemeLabel = new JLabel("Scheme");
-        schemeChoice = new JComboBox<>(choicesScheme);                  // Method selection
+        JLabel iterationLabel = new JLabel("Iteration method");
+        iterationChoice = new JComboBox<>(choicesIterationMethod);                  // Method selection
         JLabel sigmaLabel = new JLabel("Sigma");                // Enter epsilon
         sigmaInput = new JTextField("0.0135");
-        JLabel curantLabel = new JLabel("Curant");
-        curantInput = new JTextField();
+        JLabel errorLabel = new JLabel("Error");                // Enter epsilon
+        errorInput = new JTextField();
+        JLabel iterationsLabel = new JLabel("Iterations");
+        iterationsInput = new JTextField();
         JLabel timeLabel = new JLabel("Time");
         timeInput = new JTextField();
         // Control panel
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new GridLayout(35, 1));
         controlPanel.setBackground(Color.lightGray);
-        controlPanel.add(schemeLabel);
-        controlPanel.add(schemeChoice);
+        controlPanel.add(iterationLabel);
+        controlPanel.add(iterationChoice);
         controlPanel.add(problemLabel);
         controlPanel.add(problemsChoice);
-        controlPanel.add(sigmaLabel);
-        controlPanel.add(sigmaInput);
         controlPanel.add(nodesLabel);
         controlPanel.add(nodesChoice);
-        controlPanel.add(timeNodesLabel);
-        controlPanel.add(timeNodesChoice);
-        controlPanel.add(tMaxLabel);
-        controlPanel.add(tMaxChoice);
-        controlPanel.add(curantLabel);
-        controlPanel.add(curantInput);
-        controlPanel.add(timeLabel);
-        controlPanel.add(timeInput);
+        controlPanel.add(errorLabel);
+        controlPanel.add(errorInput);
+        controlPanel.add(sigmaLabel);
+        controlPanel.add(sigmaInput);;
+        controlPanel.add(iterationsLabel);
+        controlPanel.add(iterationsInput);
         controlPanel.add(computeButton);
         controlPanel.add(exitButton);
         add(controlPanel, BorderLayout.EAST);
 
         ActionListener actionListener = e -> {
-            scheme = schemeChoice.getSelectedIndex();
+            method = iterationChoice.getSelectedIndex();
             problem = problemsChoice.getSelectedIndex();
             k = kChoice.getItemAt(kChoice.getSelectedIndex());
             sigma = Double.parseDouble(Objects.requireNonNull(sigmaInput.getText()));
             N = nodesChoice.getItemAt(nodesChoice.getSelectedIndex());
             M = timeNodesChoice.getItemAt(timeNodesChoice.getSelectedIndex());
             Tmax = tMaxChoice.getItemAt(tMaxChoice.getSelectedIndex());
-            startThread();
+            // startThread();
         };
         problemsChoice.addActionListener(actionListener);
-        schemeChoice.addActionListener(actionListener);
+        iterationChoice.addActionListener(actionListener);
         nodesChoice.addActionListener(actionListener);
         timeNodesChoice.addActionListener(actionListener);
         tMaxChoice.addActionListener(actionListener);
@@ -203,7 +201,7 @@ public class Main extends JFrame{
         // Initialization
         l = 2;
         m = 1;
-        switch (scheme) {
+        switch (method) {
             case 0 -> {
                 theta = 0;
                 tau = 1;
