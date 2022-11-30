@@ -23,7 +23,7 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    private static double[] x, array_u, array_v, array_a, array_b, array_c, array_f, array_sol_origin;
+    private static double[] x, alpha, beta, array_u, array_v, array_a, array_b, array_c, array_f, array_sol_origin;
     private static double error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, A, B, C, A0, B0, C0;
     private static boolean firstCycle = true, lastCycle = true;
@@ -154,19 +154,19 @@ public class Main extends JFrame{
     //------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------NUMERICAL-METHODS------------------------------------------------------
     // Double sweep algorithm
-    private static double[] ConstantDoubleSweep(int n, double A, double B, double C, double[] F) {
-        double[] U = new double[n+1];
-        double[] alpha = new double[n+1];
-        double[] beta = new double[n+1];
+    private static double[] ConstantDoubleSweep(int N, double A, double B, double C, double[] F) {
+        double[] U = new double[N+1];
+        double[] alpha = new double[N+1];
+        double[] beta = new double[N+1];
         alpha[1] = C/B;
         beta[1] = F[1]/B;
-        for (int i = 2; i < n; i++) {
+        for (int i = 2; i < N; i++) {
             double v = B - alpha[i - 1] * A;
             alpha[i] = C / v;
-            beta[i] = (F[i] + beta[i-1]*A) / v;
+            beta[i] = (F[i] + beta[i - 1]*A) / v;
         }
-        U[n] = (F[n] + beta[n-1]*A)/(B - alpha[n-1]*A);
-        for (int i = n-1; i >= 1; i--) {
+        U[N] = (F[N] + beta[N-1]*A)/(B - alpha[N-1]*A);
+        for (int i = N-1; i >= 1; i--) {
             U[i] = alpha[i]*U[i+1] + beta[i];
         }
         return U;
@@ -223,6 +223,8 @@ public class Main extends JFrame{
         B0 = 1 - A0 - C0;
         // Arrays
         x = new double[N+1];
+        alpha = new double[N+1];
+        beta = new double[N+1];
         array_f = new double[N+1];
         array_a = new double[N+1];
         array_b = new double[N+1];
@@ -234,18 +236,36 @@ public class Main extends JFrame{
             x[i] = (i-1.0)/(N-1);
         }
         // (V.2.8)-(V.2.10)
-        if(t==0.0) {
-            for (int i = 1; i <=N; i++) {
-                array_f[i] = Phi(x[i], 0);
+        if(t==0) {
+            for (int i = 0; i <=N; i++) {
+                array_f[i] = U(x[i], t);
             }
             array_v = Arrays.copyOf(array_f, N+1);
         } else {
             array_f[1] = Psi0(t);
             array_f[N] = Psi1(t);
-            for (int i = 2; i < N; i++) {
+
+            alpha[1] = C / B;
+            beta[1] = (A0 * array_v[0] + B0 * array_v[1] + C0 * array_v[2]) / B;
+
+            for (int i = 2; i < N; i++)
+            {
+                alpha[i] = C / (B - alpha[i - 1] * A);
+                beta[i] = (A0 * array_v[i - 1] + B0 * array_v[i] + C0 * array_v[i + 1] + beta[i - 1] * A) / (B - alpha[i - 1] * A);
+            }
+
+            for (int i = N - 1; i >= 2; i--)
+            {
+                array_f[i] = alpha[i] * array_v[i + 1] + beta[i];
+            }
+
+            array_v = Arrays.copyOf(array_f, N+1);
+
+          /*  for (int i = 2; i < N; i++) {
                 array_f[i]=A0*array_v[i-1]+B0*array_v[i]+C0*array_v[i+1];
             }
-            array_v = ConstantDoubleSweep(N, A, B, C, array_f);
+
+            array_v = ConstantDoubleSweep(N, A, B, C, array_f);*/
         }
         // Calculate error
         for (int i = 1; i <= N; i++) {
@@ -320,7 +340,6 @@ public class Main extends JFrame{
                     ApplyNumericalMethod();
                     Graph();
                     t += tau;
-                    m++;
                 }
                 interrupt();
             } catch(Exception e) {

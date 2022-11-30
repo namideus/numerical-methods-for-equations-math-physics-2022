@@ -3,6 +3,11 @@ import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.Styler;
+import org.knowm.xchart.style.lines.MatlabSeriesLines;
+import org.knowm.xchart.style.theme.GGPlot2Theme;
+import org.knowm.xchart.style.theme.MatlabTheme;
+import org.knowm.xchart.style.theme.Theme;
+import org.knowm.xchart.style.theme.XChartTheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +28,8 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    private static double[] x, array_u, array_v, array_a, array_b, array_c, array_f, array_sol_origin;
+    private static double[] x, y, array_v, array_a, array_b, array_c, array_f, array_sol_origin;
+    private static double[][] array_u;
     private static double l,m,error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, sigma, A, B, C, A0, B0, C0;
     private static boolean firstCycle = true, lastCycle = true;
@@ -62,10 +68,10 @@ public class Main extends JFrame{
         JLabel problemLabel = new JLabel("Problem");
         problemsChoice = new JComboBox<>(choicesProblem);               // Problems selection
         JLabel iterationLabel = new JLabel("Iteration method");
-        iterationChoice = new JComboBox<>(choicesIterationMethod);                  // Method selection
-        JLabel sigmaLabel = new JLabel("Sigma");                // Enter epsilon
+        iterationChoice = new JComboBox<>(choicesIterationMethod);      // Iteration selection
+        JLabel sigmaLabel = new JLabel("Sigma");                   // Enter sigma
         sigmaInput = new JTextField("0.0135");
-        JLabel errorLabel = new JLabel("Error");                // Enter epsilon
+        JLabel errorLabel = new JLabel("Error");
         errorInput = new JTextField();
         JLabel iterationsLabel = new JLabel("Iterations");
         iterationsInput = new JTextField();
@@ -74,7 +80,7 @@ public class Main extends JFrame{
         // Control panel
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new GridLayout(35, 1));
-        controlPanel.setBackground(Color.lightGray);
+        controlPanel.setBackground(Color.white);
         controlPanel.add(iterationLabel);
         controlPanel.add(iterationChoice);
         controlPanel.add(problemLabel);
@@ -94,11 +100,10 @@ public class Main extends JFrame{
         ActionListener actionListener = e -> {
             method = iterationChoice.getSelectedIndex();
             problem = problemsChoice.getSelectedIndex();
-            k = kChoice.getItemAt(kChoice.getSelectedIndex());
-            sigma = Double.parseDouble(Objects.requireNonNull(sigmaInput.getText()));
             N = nodesChoice.getItemAt(nodesChoice.getSelectedIndex());
-            M = timeNodesChoice.getItemAt(timeNodesChoice.getSelectedIndex());
-            Tmax = tMaxChoice.getItemAt(tMaxChoice.getSelectedIndex());
+            sigma = Double.parseDouble(Objects.requireNonNull(sigmaInput.getText()));
+            ApplyNumericalMethod();
+            Graph();
             // startThread();
         };
         problemsChoice.addActionListener(actionListener);
@@ -130,16 +135,17 @@ public class Main extends JFrame{
         yData1.clear();
         xData2.clear();
         yData2.clear();
-        // Numerical solution coordinates
-        for (int i = 1; i <= N; i++) {
-            xData1.add(x[i]);
-            yData1.add(array_v[i]);
-        }
-        // Analytical solution coordinates
-        for(int i = 1; i <= 100; i++) {
-            double xe = (i - 1.0) / (100 - 1.0);
-            xData2.add(xe);
-            yData2.add(U(xe, t));
+        // Numerical solution
+//        for (int i = 1; i <= N; i++) {
+//            xData1.add(x[i]);
+//            yData1.add(array_v[i]);
+//        }
+        // Analytical solution
+        for(int j = 1; j <= N; j++) {
+            for(int i = 1; i <= N; i++) {
+                xData2.add(x[i]);
+                yData2.add(U(i, j));
+            }
         }
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
@@ -168,12 +174,13 @@ public class Main extends JFrame{
         return U;
     }
     // Function
-    private static double Function(double x, double t) {
-        return 0.0;
+    private static double F(int i, int j) {
+        double lambda=4.0/(h*h)*(Math.sin(Math.PI*l*h/2)*Math.sin(Math.PI*l*h/2)+Math.sin(Math.PI*m*h/2)*Math.sin(Math.PI*m*h/2));
+        return lambda*Math.sin(Math.PI*l*x[i])*Math.sin(Math.PI*m*y[j]);
     }
     // Analytical solution
-    private static double U(double x, double t) {
-        return Math.sin(Math.PI*k*x)*Math.pow(Math.E,-(Math.PI*Math.PI*k*k)*E*t)+x*Psi1(t)+(1-x)*Psi0(t);
+    private static double U(int i, int j) {
+        return Math.sin(Math.PI*l*x[i])*Math.sin(Math.PI*m*y[j]);
     }
     // Phi(x)
     private static double Phi(double x, double t) {
@@ -201,6 +208,7 @@ public class Main extends JFrame{
         // Initialization
         l = 2;
         m = 1;
+        h = 1.0/(N-1);
         switch (method) {
             case 0 -> {
                 theta = 0;
@@ -208,20 +216,24 @@ public class Main extends JFrame{
             }
             case 1 -> {
                 theta = 1.0;
-                tau =1.0;
+                tau = 1.0;
             }
         }
         // Arrays
         x = new double[N+1];
+        y = new double[N+1];
         array_f = new double[N+1];
         array_a = new double[N+1];
         array_b = new double[N+1];
         array_c = new double[N+1];
-        array_u = new double[N+1];
+        array_u = new double[N+1][N+1];
         array_sol_origin = new double[N+1];
         // Grid
         for (int i = 1; i <= N; i++) {
             x[i] = (i-1.0)/(N-1);
+        }
+        for (int j = 1; j <= N; j++) {
+            y[j] = (j-1.0)/(N-1);
         }
         // (V.2.8)-(V.2.10)
        /* if(t==0.0) {
@@ -259,6 +271,7 @@ public class Main extends JFrame{
         Setup();
         chart = new XYChartBuilder().width(1750).height(900).xAxisTitle("X").yAxisTitle("Y").build();
         chart.getStyler().setChartBackgroundColor(Color.lightGray);
+        chart.getStyler().setTheme(new MatlabTheme());
         chart.getStyler().setCursorBackgroundColor(Color.lightGray);
         chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
         chart.getStyler().setZoomEnabled(true);
