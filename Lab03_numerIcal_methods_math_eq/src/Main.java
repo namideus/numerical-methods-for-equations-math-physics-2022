@@ -40,7 +40,7 @@ public class Main extends JFrame{
     //------------------------------------------------------JFRAME------------------------------------------------------------------
     private static XYChart chart;
     private static XYSeries testFunctionSeries, interpolateFunctionSeries;
-    private final JComboBox<Integer> nodesChoice, timeNodesChoice, tMaxChoice, kChoice;
+    private final JComboBox<Integer> nodesChoice;
     private final JComboBox<String> problemsChoice, iterationChoice;
     private final JTextField sigmaInput, iterationsInput, timeInput, errorInput;
     private JButton computeButton = new JButton("Compute");
@@ -59,22 +59,16 @@ public class Main extends JFrame{
         String[] choicesIterationMethod = {"Jacob", "Seidel"};
         JLabel nodesLabel = new JLabel("Nodes");
         nodesChoice = new JComboBox<>(choicesNodes);                    // Node selection
-        JLabel timeNodesLabel = new JLabel("Time nodes");
-        timeNodesChoice = new JComboBox<>(choicesTimeNodes);            // Time node selection
-        JLabel tMaxLabel = new JLabel("Tmax");
-        tMaxChoice = new JComboBox<>(choicesTmax);                      // Tmax selection
-        JLabel kLabel = new JLabel("K");
-        kChoice = new JComboBox<>(choicesK);
         JLabel problemLabel = new JLabel("Problem");
         problemsChoice = new JComboBox<>(choicesProblem);               // Problems selection
         JLabel iterationLabel = new JLabel("Iteration method");
         iterationChoice = new JComboBox<>(choicesIterationMethod);      // Iteration selection
+        JLabel iterationsLabel = new JLabel("Iterations (K)");
+        iterationsInput = new JTextField("1");
         JLabel sigmaLabel = new JLabel("Sigma");                   // Enter sigma
         sigmaInput = new JTextField("0.0135");
         JLabel errorLabel = new JLabel("Error");
         errorInput = new JTextField();
-        JLabel iterationsLabel = new JLabel("Iterations");
-        iterationsInput = new JTextField();
         JLabel timeLabel = new JLabel("Time");
         timeInput = new JTextField();
         // Control panel
@@ -87,12 +81,12 @@ public class Main extends JFrame{
         controlPanel.add(problemsChoice);
         controlPanel.add(nodesLabel);
         controlPanel.add(nodesChoice);
-        controlPanel.add(errorLabel);
-        controlPanel.add(errorInput);
-        controlPanel.add(sigmaLabel);
-        controlPanel.add(sigmaInput);;
         controlPanel.add(iterationsLabel);
         controlPanel.add(iterationsInput);
+        controlPanel.add(sigmaLabel);
+        controlPanel.add(sigmaInput);
+        controlPanel.add(errorLabel);
+        controlPanel.add(errorInput);
         controlPanel.add(computeButton);
         controlPanel.add(exitButton);
         add(controlPanel, BorderLayout.EAST);
@@ -101,6 +95,7 @@ public class Main extends JFrame{
             method = iterationChoice.getSelectedIndex();
             problem = problemsChoice.getSelectedIndex();
             N = nodesChoice.getItemAt(nodesChoice.getSelectedIndex());
+            k = Integer.parseInt(Objects.requireNonNull(iterationsInput.getText()));
             sigma = Double.parseDouble(Objects.requireNonNull(sigmaInput.getText()));
             ApplyNumericalMethod();
             Graph();
@@ -109,9 +104,6 @@ public class Main extends JFrame{
         problemsChoice.addActionListener(actionListener);
         iterationChoice.addActionListener(actionListener);
         nodesChoice.addActionListener(actionListener);
-        timeNodesChoice.addActionListener(actionListener);
-        tMaxChoice.addActionListener(actionListener);
-        kChoice.addActionListener(actionListener);
         sigmaInput.addActionListener(actionListener);
         computeButton.addActionListener(actionListener);
         exitButton.addActionListener(e -> System.exit(0));
