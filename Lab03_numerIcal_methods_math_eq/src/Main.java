@@ -133,8 +133,8 @@ public class Main extends JFrame{
 //            yData1.add(array_v[i]);
 //        }
         // Analytical solution
-        for(int j = 1; j <= N; j++) {
-            for(int i = 1; i <= N; i++) {
+        for(int i = 1; i <= N; i++) {
+            for(int j = 1; j <= N; j++) {
                 xData2.add(x[i]);
                 yData2.add(U(i, j));
             }
@@ -142,7 +142,7 @@ public class Main extends JFrame{
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
-        chart.setTitle("Error: "+error);
+        //chart.setTitle("Error: "+error);
         repaint();
     }
     //------------------------------------------------------------------------------------------------------------------------------
@@ -227,7 +227,15 @@ public class Main extends JFrame{
         for (int j = 1; j <= N; j++) {
             y[j] = (j-1.0)/(N-1);
         }
-        // (V.2.8)-(V.2.10)
+        // (V.1.7)
+        for(int i = 1; i <= N; i++) {
+            for(int j = 1; j <= N; j++) {
+                for(int it = 1; it <= k; it++) {
+
+                }
+            }
+        }
+
        /* if(t==0.0) {
             for (int i = 1; i <=N; i++) {
                 array_f[i] = Phi(x[i], 0);
@@ -284,7 +292,7 @@ public class Main extends JFrame{
         interpolateFunctionSeries.setLineWidth(1.2f);
         // Main frame
         frame = new Main();
-        frame.setTitle("Heat equation");
+        frame.setTitle("Poisson equation");
         frame.add(new XChartPanel<>(chart));
         frame.setSize(frame.getWidth(), frame.getHeight());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
