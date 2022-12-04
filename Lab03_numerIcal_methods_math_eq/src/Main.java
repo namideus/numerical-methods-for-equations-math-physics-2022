@@ -133,25 +133,18 @@ public class Main extends JFrame{
 //            yData1.add(array_v[i]);
 //        }
         // Analytical solution
-<<<<<<< HEAD
      //   for(int j = 1; j <= N; j++) {
             for(int i = 1; i <= N; i++) {
                 xData2.add(x[i]);
                 yData2.add(U(i, i));
                 System.out.println(U(i, i));
 
-=======
-        array_v = new double[(N+1)*(N+1)];
-        for(int i = 1; i <= N; i++) {
-            xData2.add(x[i]);
-            for(int j = 1; j <= N; j++) {
-                yData2.add(U(i, j));
->>>>>>> 9d08649c107f0780473f1845308715698d71aea5
             }
       //  }
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
+        //chart.setTitle("Error: "+error);
         repaint();
     }
     //------------------------------------------------------------------------------------------------------------------------------
