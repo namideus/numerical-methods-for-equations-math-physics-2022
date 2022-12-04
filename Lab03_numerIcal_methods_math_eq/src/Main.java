@@ -133,12 +133,14 @@ public class Main extends JFrame{
 //            yData1.add(array_v[i]);
 //        }
         // Analytical solution
-        for(int i = 1; i <= N; i++) {
-            for(int j = 1; j <= N; j++) {
+     //   for(int j = 1; j <= N; j++) {
+            for(int i = 1; i <= N; i++) {
                 xData2.add(x[i]);
-                yData2.add(U(i, j));
+                yData2.add(U(i, i));
+                System.out.println(U(i, i));
+
             }
-        }
+      //  }
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
