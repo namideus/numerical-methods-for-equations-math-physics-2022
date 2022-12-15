@@ -28,8 +28,8 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    private static double[] x, y, array_v, array_a, array_b, array_c, array_f, array_sol_origin;
-    private static double[][] array_u;
+    private static double[] x, y, array_a, array_b, array_c, f, array_sol_origin;
+    private static double[][] u, v;
     private static double l,m,error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, sigma, A, B, C, A0, B0, C0;
     private static boolean firstCycle = true, lastCycle = true;
@@ -133,14 +133,10 @@ public class Main extends JFrame{
 //            yData1.add(array_v[i]);
 //        }
         // Analytical solution
-     //   for(int j = 1; j <= N; j++) {
-            for(int i = 1; i <= N; i++) {
-                xData2.add(x[i]);
-                yData2.add(U(i, i));
-                System.out.println(U(i, i));
-
-            }
-      //  }
+        for(double x = 0; x <= 1; x+=0.01) {
+            xData2.add(x);
+            yData2.add(U(x, 0.5));
+        }
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
@@ -173,8 +169,8 @@ public class Main extends JFrame{
         return lambda*Math.sin(Math.PI*l*x[i])*Math.sin(Math.PI*m*y[j]);
     }
     // Analytical solution
-    private static double U(int i, int j) {
-        return Math.sin(Math.PI*l*x[i])*Math.sin(Math.PI*m*y[j]);
+    private static double U(double x, double y) {
+        return Math.sin(Math.PI*l*x)*Math.sin(Math.PI*m*y);
     }
     // Phi(x)
     private static double Phi(double x, double t) {
@@ -216,11 +212,9 @@ public class Main extends JFrame{
         // Arrays
         x = new double[N+1];
         y = new double[N+1];
-        array_f = new double[N+1];
-        array_a = new double[N+1];
-        array_b = new double[N+1];
-        array_c = new double[N+1];
-        array_u = new double[N+1][N+1];
+        f = new double[N+1];
+        v = new double[N+1][N+1];
+        u = new double[N+1][N+1];
         array_sol_origin = new double[N+1];
         // Grid
         for (int i = 1; i <= N; i++) {
@@ -230,10 +224,14 @@ public class Main extends JFrame{
             y[j] = (j-1.0)/(N-1);
         }
         // (V.1.7)
-        for(int i = 1; i <= N; i++) {
-            for(int j = 1; j <= N; j++) {
-                for(int it = 1; it <= k; it++) {
-
+        for(int it = 1; it <= k; it++) {
+            for (int j = 2; j < N; j++) {
+                for (int i = 2; i < N; i++) {
+                    u[i][j] = (theta/4.0)*(u[i-1][j]+u[i][j-1])
+                            +(tau-theta)/4.0*(v[i-1][j]+v[i][j-1])
+                            +tau/4.0*(v[i-1][j]+v[i][j-1])
+                            +(1-tau)*v[i][j]
+                            +tau*h*h
                 }
             }
         }
