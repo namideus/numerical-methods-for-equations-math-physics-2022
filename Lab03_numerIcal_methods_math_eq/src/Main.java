@@ -132,7 +132,6 @@ public class Main extends JFrame{
         for (int i = 1; i <= N; i++) {
             xData1.add(x[i]);
             yData1.add(u[i][N/2]);
-            System.out.println(N/2);
         }
         // Analytical solution
         for(int i = 1; i <= 100; i++) {
