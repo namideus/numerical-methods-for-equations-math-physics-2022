@@ -28,11 +28,12 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    private static double[] x, y, array_u, array_v, array_a, array_b, array_c, array_f, array_sol_origin;
+    private static double[] f, x, y, array_sol_origin;
+    private static double[][] u, v;
     private static double l,m,error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, sigma, A, B, C, A0, B0, C0;
     private static boolean firstCycle = true, lastCycle = true;
-    private static int N = 8, M, T, k, problem = 0, method = 0;
+    private static int N = 8, M, T, k, problem = 0, method = 0, iteration;
     private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
     private static final String seriesName1 = "Numerical solution";
     private static final String seriesName2 = "Analytical solution";
@@ -98,11 +99,12 @@ public class Main extends JFrame{
             sigma = Double.parseDouble(Objects.requireNonNull(sigmaInput.getText()));
             ApplyNumericalMethod();
             Graph();
-            // startThread();
+            //startThread();
         };
         problemsChoice.addActionListener(actionListener);
         iterationChoice.addActionListener(actionListener);
         nodesChoice.addActionListener(actionListener);
+        iterationsInput.addActionListener(actionListener);
         sigmaInput.addActionListener(actionListener);
         computeButton.addActionListener(actionListener);
         exitButton.addActionListener(e -> System.exit(0));
@@ -127,19 +129,17 @@ public class Main extends JFrame{
         xData2.clear();
         yData2.clear();
         // Numerical solution
-//        for (int i = 1; i <= N; i++) {
-//            xData1.add(x[i]);
-//            yData1.add(array_v[i]);
-//        }
+        for (int i = 1; i <= N; i++) {
+            xData1.add(x[i]);
+            yData1.add(u[i][N/2]);
+            System.out.println(N/2);
+        }
         // Analytical solution
-     //   for(int j = 1; j <= N; j++) {
-            for(int i = 1; i <= N; i++) {
-                xData2.add(x[i]);
-                yData2.add(U(i, i));
-                System.out.println(U(i, i));
-
-            }
-      //  }
+        for(int i = 1; i <= 100; i++) {
+            double xe = (i - 1.0) / (100 - 1.0);
+            xData2.add(xe);
+            yData2.add(U(xe, 0.5));
+        }
         // Update graphs
         chart.updateXYSeries(seriesName1, xData1, yData1, null);
         chart.updateXYSeries(seriesName2, xData2, yData2, null);
@@ -148,32 +148,14 @@ public class Main extends JFrame{
     }
     //------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------NUMERICAL-METHODS------------------------------------------------------
-    // Double sweep algorithm
-    private static double[] ConstantDoubleSweep(int n, double A, double B, double C, double[] F) {
-        double[] U = new double[n+1];
-        double[] alpha = new double[n+1];
-        double[] beta = new double[n+1];
-        alpha[1] = C/B;
-        beta[1] = F[1]/B;
-        for (int i = 2; i < n; i++) {
-            double v = B - alpha[i - 1] * A;
-            alpha[i] = C / v;
-            beta[i] = (F[i] + beta[i-1]*A) / v;
-        }
-        U[n] = (F[n] + beta[n-1]*A)/(B - alpha[n-1]*A);
-        for (int i = n-1; i >= 1; i--) {
-            U[i] = alpha[i]*U[i+1] + beta[i];
-        }
-        return U;
-    }
     // Function
     private static double F(int i, int j) {
         double lambda=4.0/(h*h)*(Math.sin(Math.PI*l*h/2)*Math.sin(Math.PI*l*h/2)+Math.sin(Math.PI*m*h/2)*Math.sin(Math.PI*m*h/2));
         return lambda*Math.sin(Math.PI*l*x[i])*Math.sin(Math.PI*m*y[j]);
     }
     // Analytical solution
-    private static double U(int i, int j) {
-        return Math.sin(Math.PI*l*x[i])*Math.sin(Math.PI*m*y[j]);
+    private static double U(double x, double y) {
+        return Math.sin(Math.PI*l*x)*Math.sin(Math.PI*m*y);
     }
     // Phi(x)
     private static double Phi(double x, double t) {
@@ -215,11 +197,9 @@ public class Main extends JFrame{
         // Arrays
         x = new double[N+1];
         y = new double[N+1];
-        array_f = new double[N+1];
-        array_a = new double[N+1];
-        array_b = new double[N+1];
-        array_c = new double[N+1];
-        array_u = new double[N+1];
+        f = new double[N+1];
+        v = new double[N+1][N+1];
+        u = new double[N+1][N+1];
         array_sol_origin = new double[N+1];
         // Grid
         for (int i = 1; i <= N; i++) {
@@ -229,30 +209,26 @@ public class Main extends JFrame{
             y[j] = (j-1.0)*h;
         }
         // (V.1.7)
-        
+        for (int j = 1; j <= N; j++) {
+            for (int i = 1; i <= N; i++) {
+                u[i][j] = v[i][j] = 0.0;
+            }
+        }
         for(int it = 1; it <= k; it++) {
-            for(int i = 1; i <= N; i++) {
-                for(int j = 1; j <= N; j++) {
-                    
+            for (int j = 2; j < N; j++) {
+                for (int i = 2; i < N; i++) {
+                    u[i][j] = (theta/4.0)*(u[i-1][j]+u[i][j-1])
+                            +(tau-theta)/4.0*(v[i-1][j]+v[i][j-1])
+                            +tau/4.0*(v[i+1][j]+v[i][j+1])
+                            +(1-tau)*v[i][j]
+                            +(tau*h*h)/4.0*F(i, j);
                 }
             }
+            v = u;
         }
 
-       /* if(t==0.0) {
-            for (int i = 1; i <=N; i++) {
-                array_f[i] = Phi(x[i], 0);
-            }
-            array_v = Arrays.copyOf(array_f, N+1);
-        } else {
-            array_f[1] = Psi0(t);
-            array_f[N] = Psi1(t);
-            for (int i = 2; i < N; i++) {
-                array_f[i]=A0*array_v[i-1]+B0*array_v[i]+C0*array_v[i+1];
-            }
-            array_v = ConstantDoubleSweep(N, A, B, C, array_f);
-        }
         // Calculate error
-        for (int i = 1; i <= N; i++) {
+        /*for (int i = 1; i <= N; i++) {
             array_sol_origin[i] = U(x[i], t);
         }
         error = Math.max(Error(array_sol_origin, array_v), error);*/
@@ -317,6 +293,7 @@ public class Main extends JFrame{
         @Override
         public void run() {
             try {
+                iteration = 0;
                 t = 0;
                 m = 0;
                 error = 0;
