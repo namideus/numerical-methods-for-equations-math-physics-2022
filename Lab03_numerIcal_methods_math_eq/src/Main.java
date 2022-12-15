@@ -28,8 +28,7 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    private static double[] x, y, array_v, array_a, array_b, array_c, array_f, array_sol_origin;
-    private static double[][] array_u;
+    private static double[] x, y, array_u, array_v, array_a, array_b, array_c, array_f, array_sol_origin;
     private static double l,m,error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
             eta0, eta1, zeta0, zeta1, phi0, phi1, E, sigma, A, B, C, A0, B0, C0;
     private static boolean firstCycle = true, lastCycle = true;
@@ -220,20 +219,21 @@ public class Main extends JFrame{
         array_a = new double[N+1];
         array_b = new double[N+1];
         array_c = new double[N+1];
-        array_u = new double[N+1][N+1];
+        array_u = new double[N+1];
         array_sol_origin = new double[N+1];
         // Grid
         for (int i = 1; i <= N; i++) {
-            x[i] = (i-1.0)/(N-1);
+            x[i] = (i-1.0)*h;
         }
         for (int j = 1; j <= N; j++) {
-            y[j] = (j-1.0)/(N-1);
+            y[j] = (j-1.0)*h;
         }
         // (V.1.7)
-        for(int i = 1; i <= N; i++) {
-            for(int j = 1; j <= N; j++) {
-                for(int it = 1; it <= k; it++) {
-
+        
+        for(int it = 1; it <= k; it++) {
+            for(int i = 1; i <= N; i++) {
+                for(int j = 1; j <= N; j++) {
+                    
                 }
             }
         }
