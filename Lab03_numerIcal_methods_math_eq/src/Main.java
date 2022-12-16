@@ -97,9 +97,7 @@ public class Main extends JFrame{
             N = nodesChoice.getItemAt(nodesChoice.getSelectedIndex());
             k = Integer.parseInt(Objects.requireNonNull(iterationsInput.getText()));
             sigma = Double.parseDouble(Objects.requireNonNull(sigmaInput.getText()));
-            ApplyNumericalMethod();
-            Graph();
-            //startThread();
+            startThread();
         };
         problemsChoice.addActionListener(actionListener);
         iterationChoice.addActionListener(actionListener);
@@ -131,7 +129,7 @@ public class Main extends JFrame{
         // Numerical solution
         for (int i = 1; i <= N; i++) {
             xData1.add(x[i]);
-            yData1.add(u[i][N/2]);
+            yData1.add(u[i][(N-1)/2]);
         }
         // Analytical solution
         for(int i = 1; i <= 100; i++) {
@@ -156,18 +154,6 @@ public class Main extends JFrame{
     private static double U(double x, double y) {
         return Math.sin(Math.PI*l*x)*Math.sin(Math.PI*m*y);
     }
-    // Phi(x)
-    private static double Phi(double x, double t) {
-        return Math.sin(Math.PI*k*x)+x*Psi1(t)+(1-x)*Psi0(t);
-    }
-    // Psi0(t)
-    private static double Psi0(double t) {
-        return 0.1;
-    }
-    // Psi1(t)
-    private static double Psi1(double t) {
-        return 0.1;
-    }
     // Error
     public static double Error(double[] a1, double[] a2) {
         double max1=0, max2=0;
@@ -177,9 +163,8 @@ public class Main extends JFrame{
         }
         return max1/max2*100;
     }
-    // Numerical method
-    private void ApplyNumericalMethod() {
-        // Initialization
+    // Initialization
+    private void Initialize() {
         l = 2;
         m = 1;
         h = 1.0/(N-1);
@@ -207,25 +192,24 @@ public class Main extends JFrame{
         for (int j = 1; j <= N; j++) {
             y[j] = (j-1.0)*h;
         }
-        // (V.1.7)
         for (int j = 1; j <= N; j++) {
             for (int i = 1; i <= N; i++) {
                 u[i][j] = v[i][j] = 0.0;
             }
         }
-        for(int it = 1; it <= k; it++) {
-            for (int j = 2; j < N; j++) {
-                for (int i = 2; i < N; i++) {
-                    u[i][j] = (theta/4.0)*(u[i-1][j]+u[i][j-1])
-                            +(tau-theta)/4.0*(v[i-1][j]+v[i][j-1])
-                            +tau/4.0*(v[i+1][j]+v[i][j+1])
-                            +(1-tau)*v[i][j]
-                            +(tau*h*h)/4.0*F(i, j);
-                }
+    }
+    // Numerical method
+    private void ApplyNumericalMethod() {
+        for (int j = 2; j < N; j++) {
+            for (int i = 2; i < N; i++) {
+                u[i][j] = (theta/4.0)*(u[i-1][j]+u[i][j-1])
+                        +(tau-theta)/4.0*(v[i-1][j]+v[i][j-1])
+                        +tau/4.0*(v[i+1][j]+v[i][j+1])
+                        +(1-tau)*v[i][j]
+                        +(tau*h*h)/4.0*F(i, j);
             }
-            v = u;
         }
-
+        v = u; // Copy previous numerical solution
         // Calculate error
         /*for (int i = 1; i <= N; i++) {
             array_sol_origin[i] = U(x[i], t);
@@ -294,14 +278,13 @@ public class Main extends JFrame{
             try {
                 iteration = 0;
                 t = 0;
-                m = 0;
                 error = 0;
-                while (t <= Tmax) {
-                    sleep(170);
+                Initialize();
+                while (iteration <= k) {
+                    sleep(150);
                     ApplyNumericalMethod();
                     Graph();
-                    t += tau;
-                    m++;
+                    iteration++;
                 }
                 interrupt();
             } catch(Exception e) {
