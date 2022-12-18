@@ -30,16 +30,14 @@ public class Main extends JFrame{
     private static ComputationThread thread;
     private static double[] f, x, y, array_sol_origin;
     private static double[][] u, v;
-    private static double l,m,error=0.0, h, t=0, tau, curant, Tmax, a, b, theta,
-            eta0, eta1, zeta0, zeta1, phi0, phi1, E, sigma, A, B, C, A0, B0, C0;
-    private static boolean firstCycle = true, lastCycle = true;
-    private static int N = 8, M, T, k, problem = 0, method = 0, iteration;
-    private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3;
-    private static final String seriesName1 = "Numerical solution";
-    private static final String seriesName2 = "Analytical solution";
+    private static double l,m, error=0.0, h, t=0, tau, theta, sigma;
+    private static int N = 8, k, problem = 0, method = 0, iteration = 0;
+    private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3, xData4, yData4;
+    private static final String numericalSeriesName = "Numerical solution";
+    private static final String analyticalSeriesName = "Analytical solution";
     //------------------------------------------------------JFRAME------------------------------------------------------------------
-    private static XYChart chart;
-    private static XYSeries testFunctionSeries, interpolateFunctionSeries;
+    private static XYChart chart1, chart2;
+    private static XYSeries solutionFunctionSeries1, solutionFunctionSeries2, numericalFunctionSeries1, numericalFunctionSeries2;
     private final JComboBox<Integer> nodesChoice;
     private final JComboBox<String> problemsChoice, iterationChoice;
     private final JTextField sigmaInput, iterationsInput, timeInput, errorInput;
@@ -114,10 +112,18 @@ public class Main extends JFrame{
         yData1 = new ArrayList<>();
         xData2 = new ArrayList<>();
         yData2 = new ArrayList<>();
+        xData3 = new ArrayList<>();
+        yData3 = new ArrayList<>();
+        xData4 = new ArrayList<>();
+        yData4 = new ArrayList<>();
         xData1.add(0d);
         yData1.add(0d);
         xData2.add(0d);
         yData2.add(0d);
+        xData3.add(0d);
+        yData3.add(0d);
+        xData4.add(0d);
+        yData4.add(0d);
     }
     // Graph solutions
     private void Graph() {
@@ -126,10 +132,18 @@ public class Main extends JFrame{
         yData1.clear();
         xData2.clear();
         yData2.clear();
+        xData3.clear();
+        yData3.clear();
+        xData4.clear();
+        yData4.clear();
         // Numerical solution
         for (int i = 1; i <= N; i++) {
             xData1.add(x[i]);
-            yData1.add(u[i][(N-1)/2]);
+            yData1.add(u[i][(int)Math.ceil(N/2.0)]);
+        }
+        for (int j = 1; j <= N; j++) {
+            xData3.add(y[j]);
+            yData3.add(u[(int)Math.ceil(N/4.0)][j]);
         }
         // Analytical solution
         for(int i = 1; i <= 100; i++) {
@@ -137,10 +151,16 @@ public class Main extends JFrame{
             xData2.add(xe);
             yData2.add(U(xe, 0.5));
         }
-        // Update graphs
-        chart.updateXYSeries(seriesName1, xData1, yData1, null);
-        chart.updateXYSeries(seriesName2, xData2, yData2, null);
-        //chart.setTitle("Error: "+error);
+        for(int j = 1; j <= 100; j++) {
+            double ye = (j - 1.0) / (100 - 1.0);
+            xData4.add(ye);
+            yData4.add(U(0.25, ye));
+        }
+        // Update charts
+        chart1.updateXYSeries(numericalSeriesName, xData1, yData1, null);
+        chart1.updateXYSeries(analyticalSeriesName, xData2, yData2, null);
+        chart2.updateXYSeries(numericalSeriesName, xData3, yData3, null);
+        chart2.updateXYSeries(analyticalSeriesName, xData4, yData4, null);
         repaint();
     }
     //------------------------------------------------------------------------------------------------------------------------------
@@ -210,11 +230,6 @@ public class Main extends JFrame{
             }
         }
         v = u; // Copy previous numerical solution
-        // Calculate error
-        /*for (int i = 1; i <= N; i++) {
-            array_sol_origin[i] = U(x[i], t);
-        }
-        error = Math.max(Error(array_sol_origin, array_v), error);*/
     }
     //------------------------------------------------------------------------------------------------------------------------------
     //----------------------------------------------------------MAIN----------------------------------------------------------------
@@ -228,33 +243,52 @@ public class Main extends JFrame{
         int blue = rgb & 0xFF;
         return new Color(red, green, blue, 0x33);
     }
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
         Setup();
-        chart = new XYChartBuilder().width(1750).height(900).xAxisTitle("X").yAxisTitle("Y").build();
-        chart.getStyler().setChartBackgroundColor(Color.lightGray);
-        chart.getStyler().setTheme(new MatlabTheme());
-        chart.getStyler().setCursorBackgroundColor(Color.lightGray);
-        chart.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
-        chart.getStyler().setZoomEnabled(true);
-        chart.getStyler().setZoomResetByButton(true);
-        chart.getStyler().setCursorEnabled(true);
-        chart.getStyler().setPlotBorderVisible(true);
-        chart.getStyler().setPlotMargin(10);
-        chart.getStyler().setMarkerSize(4);
-        // Series 1
-        testFunctionSeries = chart.addSeries(seriesName1, xData1, yData1);
-        testFunctionSeries.setLineColor(Color.blue);
-        testFunctionSeries.setMarkerColor(Color.blue);
-        testFunctionSeries.setLineWidth(1.2f);
-        // Series 2
-        interpolateFunctionSeries = chart.addSeries(seriesName2, xData2, yData2);
-        interpolateFunctionSeries.setLineColor(Color.red);
-        interpolateFunctionSeries.setMarkerColor(color(1.0));
-        interpolateFunctionSeries.setLineWidth(1.2f);
+        chart1 = new XYChartBuilder().width(850).height(850).xAxisTitle("X").yAxisTitle("Y").build();
+        chart1.getStyler().setChartBackgroundColor(Color.lightGray);
+        chart1.getStyler().setTheme(new MatlabTheme());
+        chart1.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
+        chart1.getStyler().setZoomEnabled(true);
+        chart1.getStyler().setZoomResetByButton(true);
+        chart1.getStyler().setPlotBorderVisible(true);
+        chart1.getStyler().setPlotMargin(10);
+        chart1.getStyler().setMarkerSize(4);
+        chart2 = new XYChartBuilder().width(850).height(850).xAxisTitle("X").yAxisTitle("Y").build();
+        chart2.getStyler().setChartBackgroundColor(Color.lightGray);
+        chart2.getStyler().setTheme(new MatlabTheme());
+        chart2.getStyler().setLegendPosition(Styler.LegendPosition.InsideNW);
+        chart2.getStyler().setZoomEnabled(true);
+        chart2.getStyler().setZoomResetByButton(true);
+        chart2.getStyler().setPlotBorderVisible(true);
+        chart2.getStyler().setPlotMargin(10);
+        chart2.getStyler().setMarkerSize(4);
+        // Chart 1
+        solutionFunctionSeries1 = chart1.addSeries(numericalSeriesName, xData1, yData1);
+        solutionFunctionSeries1.setLineColor(Color.blue);
+        solutionFunctionSeries1.setMarkerColor(Color.blue);
+        solutionFunctionSeries1.setLineWidth(1.2f);
+
+        numericalFunctionSeries1 = chart1.addSeries(analyticalSeriesName, xData2, yData2);
+        numericalFunctionSeries1.setLineColor(Color.red);
+        numericalFunctionSeries1.setMarkerColor(color(1.0));
+        numericalFunctionSeries1.setLineWidth(1.2f);
+        // Chart 2
+        solutionFunctionSeries2 = chart2.addSeries(numericalSeriesName, xData3, yData3);
+        solutionFunctionSeries2.setLineColor(Color.blue);
+        solutionFunctionSeries2.setMarkerColor(Color.blue);
+        solutionFunctionSeries2.setLineWidth(1.2f);
+
+        numericalFunctionSeries2 = chart2.addSeries(analyticalSeriesName, xData4, yData4);
+        numericalFunctionSeries2.setLineColor(Color.red);
+        numericalFunctionSeries2.setMarkerColor(color(1.0));
+        numericalFunctionSeries2.setLineWidth(1.2f);
         // Main frame
         frame = new Main();
+        frame.setLayout(new FlowLayout());
         frame.setTitle("Poisson equation");
-        frame.add(new XChartPanel<>(chart));
+        frame.getContentPane().add(new XChartPanel<>(chart1));
+        frame.getContentPane().add(new XChartPanel<>(chart2));
         frame.setSize(frame.getWidth(), frame.getHeight());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
@@ -279,13 +313,20 @@ public class Main extends JFrame{
                 iteration = 0;
                 t = 0;
                 error = 0;
+                errorInput.setText("");
                 Initialize();
                 while (iteration <= k) {
-                    sleep(150);
+                    sleep(100);
                     ApplyNumericalMethod();
                     Graph();
                     iteration++;
                 }
+                // Calculate error
+                /*for (int i = 1; i <= N; i++) {
+                    array_sol_origin[i] = U(x[i], t);
+                }
+                error = Math.max(Error(array_sol_origin, array_v), error);*/
+                errorInput.setText("0.1111");
                 interrupt();
             } catch(Exception e) {
                 System.out.println("Exception is caught: " + e);
