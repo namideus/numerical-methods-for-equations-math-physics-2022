@@ -28,11 +28,11 @@ import java.util.Objects;
 public class Main extends JFrame{
     private static Main frame;
     private static ComputationThread thread;
-    private static double[] f, x, y, array_sol_origin;
-    private static double[][] u, v;
-    private static double l,m, error=0.0, h, t=0, tau, theta, sigma;
-    private static int N = 8, k, problem = 0, method = 0, iteration = 0;
-    private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3, xData4, yData4;
+    private static double[] x, y;
+    private static double[][] u, v, uprev;
+    private static double l,m, error=0.0, h, tau, theta, sigma;
+    private static int N = 8, method = 0, iteration = 0, problem, k;
+    private static ArrayList<Double> xData1,yData1,xData2,yData2,xData3,yData3,xData4,yData4;
     private static final String numericalSeriesName = "Numerical solution";
     private static final String analyticalSeriesName = "Analytical solution";
     //------------------------------------------------------JFRAME------------------------------------------------------------------
@@ -203,10 +203,10 @@ public class Main extends JFrame{
         // Arrays
         x = new double[N+1];
         y = new double[N+1];
-        f = new double[N+1];
         v = new double[N+1][N+1];
         u = new double[N+1][N+1];
-        array_sol_origin = new double[N+1];
+        uprev = new double[N+1][N+1];
+
         // Grid
         for (int i = 1; i <= N; i++) {
             x[i] = (i-1.0)*h;
@@ -307,22 +307,37 @@ public class Main extends JFrame{
         }
         thread.start();
     }
+    private double chebyshevNormDifference(double[][] u)
+    {
+        double res = 0, sum;
+        for (int j = 1; j <= N; j++) {
+            sum = 0;
+            for (int i = 1; i <= N; i++) {
+                sum += Math.abs(u[j][i]-uprev[j][i]);
+            }
+            res = Math.max(sum, res);
+        }
+        uprev = u;
+        return res;
+    }
     private class ComputationThread extends Thread {
         public ComputationThread() {}
         @Override
         public void run() {
             try {
                 iteration = 0;
-                t = 0;
                 error = 0;
                 errorInput.setText("");
                 Initialize();
-                while (iteration <= k) {
+               while (iteration <= k) {
+                //do {
+                   // iterationsInput.setText(iteration+"");
                     sleep(100);
                     ApplyNumericalMethod();
                     Graph();
                     iteration++;
                 }
+               //while(chebyshevNormDifference(u) > sigma);
                 // Calculate error
                 for (int j = 1; j <= N; j++) {
                     for (int i = 1; i <= N; i++) {
