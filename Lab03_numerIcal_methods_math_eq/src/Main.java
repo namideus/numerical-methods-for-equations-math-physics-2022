@@ -188,6 +188,8 @@ public class Main extends JFrame{
         l = 2;
         m = 1;
         h = 1.0/(N-1);
+        sigma = 1.0/Math.pow(N-1, 3);
+        sigmaInput.setText(Double.toString(sigma));
         switch (method) {
             case 0 -> {
                 theta = 0;
@@ -322,11 +324,12 @@ public class Main extends JFrame{
                     iteration++;
                 }
                 // Calculate error
-                /*for (int i = 1; i <= N; i++) {
-                    array_sol_origin[i] = U(x[i], t);
+                for (int j = 1; j <= N; j++) {
+                    for (int i = 1; i <= N; i++) {
+                        error = Math.max(Math.abs(u[i][j]-U(x[i], y[j])), error);
+                    }
                 }
-                error = Math.max(Error(array_sol_origin, array_v), error);*/
-                errorInput.setText("0.1111");
+                errorInput.setText(error+"");
                 interrupt();
             } catch(Exception e) {
                 System.out.println("Exception is caught: " + e);
