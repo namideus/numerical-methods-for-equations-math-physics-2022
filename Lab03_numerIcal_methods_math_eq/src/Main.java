@@ -188,7 +188,7 @@ public class Main extends JFrame{
         l = 2;
         m = 1;
         h = 1.0/(N-1);
-        sigma = 1.0/Math.pow(N-1, 3);
+       // sigma = 1.0/Math.pow(N-1, 3);
         sigmaInput.setText(Double.toString(sigma));
         switch (method) {
             case 0 -> {
@@ -309,11 +309,12 @@ public class Main extends JFrame{
     }
     private double chebyshevNormDifference(double[][] u)
     {
-        double res = 0, sum;
+        double res = 0, sum, max = 0;
         for (int j = 1; j <= N; j++) {
             sum = 0;
             for (int i = 1; i <= N; i++) {
-                sum += Math.abs(u[j][i]-uprev[j][i]);
+                // max = Math.max(max, Math.abs(u[i][j]-uprev[i][j]));
+                sum += Math.abs(Math.abs(u[j][i])-Math.abs(uprev[j][i]));
             }
             res = Math.max(sum, res);
         }
@@ -329,15 +330,16 @@ public class Main extends JFrame{
                 error = 0;
                 errorInput.setText("");
                 Initialize();
-               while (iteration <= k) {
-                //do {
-                   // iterationsInput.setText(iteration+"");
-                    sleep(100);
-                    ApplyNumericalMethod();
-                    Graph();
-                    iteration++;
-                }
-               //while(chebyshevNormDifference(u) > sigma);
+               //while (iteration <= k) {
+                   do {
+                       // iterationsInput.setText(iteration+"");
+                       sleep(100);
+                       ApplyNumericalMethod();
+                       Graph();
+                       iteration++;
+                   }
+               //}
+               while(chebyshevNormDifference(u) > sigma);
                 // Calculate error
                 for (int j = 1; j <= N; j++) {
                     for (int i = 1; i <= N; i++) {
